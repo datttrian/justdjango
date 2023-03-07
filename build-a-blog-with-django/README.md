@@ -142,7 +142,7 @@ the things a blog usually has, like authors, categories and blog posts.
 
 Inside of the **models.py** file, import the `get_user_model which` is a helper function from Django that fetches the User model for the project. Also import Django’s `models`  module at the top of the file like this:
 
-```bash
+```python
 from django.contrib.auth import get_user_model
 from django.db import models
 
