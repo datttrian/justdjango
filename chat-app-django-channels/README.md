@@ -422,7 +422,7 @@ In `frontend/src` you can delete `App.css` and `logo.svg`.
 In `App.tsx` replace everything with the following:
 
 ```tsx
-# App.tsx
+// App.tsx
 export default function App() {
   return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
 }
@@ -430,11 +430,9 @@ export default function App() {
 
 Run the server with:
 
-npm
-
-run
-
-start  
+```bash
+npm run start
+```
 
 And you should see a **Hello World** displaying.
 
@@ -450,205 +448,42 @@ from a websocket.
 
 ### Install the package:
 
-npm
+```bash
+npm i react-use-websocket  
+```
 
-i
+In `App.tsx` we will now test the connection to the websocket consumer. Open `App.tsx` and replace it with the following:
 
-react-use-websocket  
+```tsx
+// App.tsx
+import React from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
-In
+export default function App() {
+  const { readyState } = useWebSocket("ws://127.0.0.1:8000/", {
+    onOpen: () => {
+      console.log("Connected!");
+    },
+    onClose: () => {
+      console.log("Disconnected!");
+    }
+  });
 
-App.tsx we will now test the connection to the websocket consumer. Open
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated"
+  }[readyState];
 
-App.tsx and replace it with the following:
-
-App.tsx
-
-import
-
-React
-
-from
-
-"react"
-
-;  
-
-import
-
-useWebSocket, { ReadyState }
-
-from
-
-"react-use-websocket"
-
-;  
-
-  
-
-export
-
-default
-
-function
-
-App
-
-()
-
-{  
-
-const
-
-{
-
-readyState
-
+  return (
+    <div>
+      <span>The WebSocket is currently {connectionStatus}</span>
+    </div>
+  );
 }
-
-=
-
-useWebSocket
-
-(
-
-"ws://127.0.0.1:8000/"
-
-, {  
-
-onOpen
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Connected!"
-
-);  
-
-},  
-
-onClose
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Disconnected!"
-
-);  
-
-}  
-
-});  
-
-  
-
-const
-
-connectionStatus
-
-=
-
-{  
-
-\[ReadyState.
-
-CONNECTING
-
-\]:
-
-"Connecting"
-
-,  
-
-\[ReadyState.
-
-OPEN
-
-\]:
-
-"Open"
-
-,  
-
-\[ReadyState.
-
-CLOSING
-
-\]:
-
-"Closing"
-
-,  
-
-\[ReadyState.
-
-CLOSED
-
-\]:
-
-"Closed"
-
-,  
-
-\[ReadyState.
-
-UNINSTANTIATED
-
-\]:
-
-"Uninstantiated"  
-
-}\[readyState\];  
-
-  
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-\<
-
-span
-
-\>The WebSocket is currently {connectionStatus}\</
-
-span
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
+```
 
 Go to localhost:3000 and you should see the message *The WebSocket is
 currently Open.* In the "Console" tab you should also see a message
@@ -662,323 +497,80 @@ you should see \*Connected! \*printed out.
 
 ### Receiving Events on the Frontend
 
-Using the
+Using the `useWebSocket` hook, we can add create a connection by passing in the URL
+of the Django Channels websocket. Now add the new `onMessage` property:
 
-useWebSocket hook, we can add create a connection by passing in the URL
-of the Django Channels websocket. Now add the new
+```js
+const { readyState } = useWebSocket("ws://127.0.0.1:8000/", {
+  onOpen: () => {
+    console.log("Connected!");
+  },
+  onClose: () => {
+    console.log("Disconnected!");
+  },
+  // New onMessage handler
+  onMessage: (e) => {
+    console.log(e);
+  }
+});
+```
 
-onMessage property:
-
-const
-
-{
-
-readyState
-
-}
-
-=
-
-useWebSocket
-
-(
-
-"ws://127.0.0.1:8000/"
-
-, {  
-
-onOpen
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Connected!"
-
-);  
-
-},  
-
-onClose
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Disconnected!"
-
-);  
-
-},  
-
-// New onMessage handler  
-
-onMessage
-
-: (
-
-e
-
-)
-
-=\>
-
-{  
-
-console.
-
-log
-
-(e);  
-
-}  
-
-});  
-
-The
-
-onMessage property is a callback function for when the websocket
+The `onMessage` property is a callback function for when the websocket
 receives events. All we're doing is logging those messages to the bash.
 If you go to the **Console** tab in the browser you should see this
 printed out:
 
-MessageEvent {
+```js
+MessageEvent {isTrusted: true, data: `{"type": "welcome_message", "message": "Hey there! You've successfully connected!"}`, origin: 'ws://127.0.0.1:8000', lastEventId: '', source: null, …}
+```
 
-isTrusted
+Remember earlier we added this to the consumer in the `connect` method:
 
-:
-
-true
-
-,
-
-data
-
-:
-
-\`{"type": "welcome_message", "message": "Hey there! You've successfully
-connected!"}\`
-
-,
-
-origin
-
-:
-
-'ws://127.0.0.1:8000'
-
-,
-
-lastEventId
-
-:
-
-''
-
-,
-
-source
-
-:
-
-null
-
-, …}  
-
-Remember earlier we added this to the consumer in the
-
-connect method:
-
-self
-
-.send_json(  
-
-{  
-
-"type"
-
-:
-
-"welcome_message"
-
-,  
-
-"message"
-
-:
-
-"Hey there! You've successfully connected!"
-
-,  
-
-}  
-
-)  
+```js
+self.send_json(
+    {
+        "type": "welcome_message",
+        "message": "Hey there! You've successfully connected!",
+    }
+)
+```
 
 This sends a JSON message when connecting to the websocket. Now we're
 seeing that message received on the frontend after connecting.
 Everything is working so far!
 
-We can already add a bit of logic to the
-
-onMessage handler so that it calls specific functions based on the
-**type** of message received. Using JavaScript
-
-switch and
-
-case syntax, add this to the
-
-onMessage handler:
-
-onMessage
-
-: (
-
-e
-
-)
-
-=\>
-
-{  
-
-const
-
-data
-
-=
-
-JSON
-
-.
-
-parse
-
-(e.data);  
-
-switch
-
-(data.type) {  
-
-case
-
-"welcome_message"
-
-:  
-
-setWelcomeMessage
-
-(data.message);  
-
-break
-
-;  
-
-default
-
-:  
-
-bash.
-
-error
-
-(
-
-"Unknown message type!"
-
-);  
-
-break
-
-;  
-
-}  
-
-};  
-
-Add some state to the top of the
-
-App component:
-
-const
-
-\[
-
-welcomeMessage
-
-,
-
-setWelcomeMessage
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-Lastly, render out the
-
-welcomeMessage state in the return statement:
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-\<
-
-span
-
-\>The WebSocket is currently {connectionStatus}\</
-
-span
-
-\>  
-
-\<
-
-p
-
-\>{welcomeMessage}\</
-
-p
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
+We can already add a bit of logic to the `onMessage` handler so that it calls specific functions based on the **type** of message received. Using JavaScript `switch` and `case` syntax, add this to the `onMessage` handler:
+
+```js
+onMessage: (e) => {
+  const data = JSON.parse(e.data);
+  switch (data.type) {
+    case "welcome_message":
+      setWelcomeMessage(data.message);
+      break;
+    default:
+      bash.error("Unknown message type!");
+      break;
+  }
+};
+```
+
+Add some state to the top of the `App` component:
+
+```js
+const [welcomeMessage, setWelcomeMessage] = useState("");
+```
+
+Lastly, render out the `welcomeMessage` state in the return statement:
+
+```js
+return (
+  <div>
+    <span>The WebSocket is currently {connectionStatus}</span>
+    <p>{welcomeMessage}</p>
+  </div>
+);
+```
 
 You should now see \*Hey there! You've successfully connected!
 \*rendered on the page.
@@ -987,82 +579,28 @@ You should now see \*Hey there! You've successfully connected!
 
 The next step is to send messages on the frontend.
 
-The
+The `useWebSocket` hook provides a function `sendJsonMessage` that you can access:
 
-useWebSocket hook provides a function
+```js
+const { sendJsonMessage } = useWebSocket("ws://127.0.0.1:8000/");
+```
 
-sendJsonMessage that you can access:
-
-const
-
-{
-
-sendJsonMessage
-
-}
-
-=
-
-useWebSocket
-
-(
-
-"ws://127.0.0.1:8000/"
-
-);  
-
-Add the
-
-sendJsonMessage function to your code and then add a button in the
+Add the `sendJsonMessage` function to your code and then add a button in the
 return statement:
 
-\<
-
-button  
-
-className
-
-=
-
-"bg-gray-300 px-3 py-1"  
-
-onClick
-
-=
-
-{()
-
-=\>
-
-{  
-
-sendJsonMessage
-
-({  
-
-type:
-
-"greeting"
-
-,  
-
-message:
-
-"Hi!"  
-
-});  
-
-}}  
-
-\>  
-
-Say Hi  
-
-\</
-
-button
-
-\>  
+```html
+<button
+  className="bg-gray-300 px-3 py-1"
+  onClick={() => {
+    sendJsonMessage({
+      type: "greeting",
+      message: "Hi!"
+    });
+  }}
+>
+  Say Hi
+</button>
+```
 
 Here we're calling the
 
@@ -1085,29 +623,11 @@ the
 
 receive_json method does. Right now we are just printing the content:
 
-def
-
-receive_json
-
-(self, content,
-
-\*\*
-
-kwargs):  
-
-print
-
-(content)  
-
-return
-
-super
-
-().receive_json(content,
-
-\*\*
-
-kwargs)  
+```python
+def receive_json(self, content, **kwargs):
+    print(content)
+    return super().receive_json(content, **kwargs)
+```
 
 Just like in the frontend, we can perform some logic depending on the
 **type** of message received. Since we're now sending a
@@ -1115,97 +635,28 @@ Just like in the frontend, we can perform some logic depending on the
 greeting message from the frontend, let's check for that type in the
 consumer:
 
-def
-
-receive_json
-
-(self, content,
-
-\*\*
-
-kwargs):  
-
-message_type
-
-=
-
-content\[
-
-"type"
-
-\]  
-
-if
-
-message_type
-
-==
-
-"greeting"
-
-:  
-
-print
-
-(content\[
-
-"message"
-
-\])  
-
-return
-
-super
-
-().receive_json(content,
-
-\*\*
-
-kwargs)  
+```python 
+def receive_json(self, content, **kwargs):
+    message_type = content["type"]
+    if message_type == "greeting":
+        print(content["message"])
+    return super().receive_json(content, **kwargs)
+```
 
 On your localhost click the button and you should see \*Hi! \*printed in
 the terminal.
 
 #### Send a message back to the user
 
-We've already covered how to send messages using
+We've already covered how to send messages using `self.send_json` in the consumer. Inside the `receive_json` method we can then send a message based on the type of message received:
 
-self.send_json in the consumer. Inside the
-
-receive_json method we can then send a message based on the type of
-message received:
-
-if
-
-message_type
-
-==
-
-"greeting"
-
-:  
-
-self
-
-.send_json({  
-
-"type"
-
-:
-
-"greeting_response"
-
-,  
-
-"message"
-
-:
-
-"How are you?"
-
-,  
-
-})  
+```python
+if message_type == "greeting":
+    self.send_json({
+        "type": "greeting_response",
+        "message": "How are you?",
+    })
+```
 
 #### Echo the message to all the users connected to the same chat
 
@@ -1214,168 +665,49 @@ exists in typical chat applications. If you think about WhatsApp or
 Facebook Messenger, when you send a message it is first received by the
 server and then echoed to all the connected participants.
 
-This kind of logic is best handled with
-
-groups, a part of Django Channels that enables you to implement public
-and private "chat rooms" where each user connected to the group receives
+This kind of logic is best handled with `groups`, a part of Django Channels that enables you to implement public and private "chat rooms" where each user connected to the group receives
 updates whenever another participant sends a message to the group.
 
-It might seem like
-
-groups are made specifically for group chats with more than two people,
+It might seem like `groups` are made specifically for group chats with more than two people,
 but you can also use them to handle one-on-one private conversations.
 
-To implement this we need to start in the
+To implement this we need to start in the `connect` method of the consumer. Here we will call the `group_add` function right after accepting the connection with `self.accept()`:
 
-connect method of the consumer. Here we will call the
+```python
+# acception connection
+async_to_sync(self.channel_layer.group_add)(
+    self.room_name,
+    self.channel_name,
+)
+# send json welcome message
+```
 
-group_add function right after accepting the connection with
-
-self.accept():
-
-\# acception connection  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_add)(  
-
-self
-
-.room_name,  
-
-self
-
-.channel_name,  
-
-)  
-
-\# send json welcome message  
-
-The
-
-async_to_sync is a function that wraps around the function you want to
-call (in this case it is
-
-self.channel_layer.group_add) and it is called using the arguments
-
-self.room_name and
-
-self.channel_name.
-
-async_to_sync converts the function from being async to synchronous.
-This is important because
-
-group_add is an async function and would not work without first
-converting it to a synchronous function. If we were using the
-
-AsyncJsonWebsocketConsumer we would not need to use
-
-async_to_sync because the consumer would be async and would support
-calling
-
-group_add.
+The `async_to_sync` is a function that wraps around the function you want to
+call (in this case it is `self.channel_layer.group_add`) and it is called using the arguments `self.room_name` and `self.channel_name`. `async_to_sync` converts the function from being async to synchronous.
+This is important because `group_add` is an async function and would not work without first converting it to a synchronous function. If we were using the `AsyncJsonWebsocketConsumer` we would not need to use `async_to_sync` because the consumer would be async and would support calling `group_add`.
 
 Make sure to add the import at the top:
 
-from
+```python
+from asgiref.sync import async_to_sync
+```
 
-asgiref.sync
+Now in the `receive_json` method, instead of sending messages only to the connected user, we will echo the messages to the entire group using the `group_send` function. Once again this is by default an async function so we need to use the `async_to_sync` wrapper to convert it to synchronous:
 
-import
-
-async_to_sync  
-
-Now in the
-
-receive_json method, instead of sending messages only to the connected
-user, we will echo the messages to the entire group using the
-
-group_send function. Once again this is by default an async function so
-we need to use the
-
-async_to_sync wrapper to convert it to synchronous:
-
-def
-
-receive_json
-
-(self, content,
-
-\*\*
-
-kwargs):  
-
-message_type
-
-=
-
-content\[
-
-"type"
-
-\]  
-
-if
-
-message_type
-
-==
-
-"chat_message"
-
-:  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.room_name,  
-
-{  
-
-"type"
-
-:
-
-"chat_message_echo"
-
-,  
-
-"name"
-
-: content\[
-
-"name"
-
-\],  
-
-"message"
-
-: content\[
-
-"message"
-
-\],  
-
-},  
-
-)  
-
-return
-
-super
-
-().receive_json(content,
-
-\*\*
-
-kwargs)  
+```python
+def receive_json(self, content, **kwargs):
+    message_type = content["type"]
+    if message_type == "chat_message":
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_name,
+            {
+                "type": "chat_message_echo",
+                "name": content["name"],
+                "message": content["message"],
+            },
+        )
+    return super().receive_json(content, **kwargs)
+```
 
 Here we are expecting the message to contain a username and a message to
 display in the chat.
@@ -1383,270 +715,72 @@ display in the chat.
 On the frontend add an input field for a username and message so that
 users can send messages to the group. Add some state:
 
-const
+```js
+const [message, setMessage] = useState("");
+const [name, setName] = useState("");
+```
 
-\[
+Add functions onto the component to handle the `onChange` property:
 
-message
+```js
+function handleChangeMessage(e: any) {
+  setMessage(e.target.value);
+}
 
-,
-
-setMessage
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-const
-
-\[
-
-name
-
-,
-
-setName
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-Add functions onto the component to handle the
-
-onChange property:
-
-function
-
-handleChangeMessage
-
-(
-
-e
-
-:
-
-any
-
-) {  
-
-setMessage
-
-(e.target.value);  
-
-}  
-
-  
-
-function
-
-handleChangeName
-
-(
-
-e
-
-:
-
-any
-
-) {  
-
-setName
-
-(e.target.value);  
-
-}  
+function handleChangeName(e: any) {
+  setName(e.target.value);
+}
+```
 
 Add a function to handle sending the message:
 
-function
+```js
+function handleSubmit() {
+  sendJsonMessage({
+    type: "chat_message",
+    message,
+    name
+  });
+  setName("");
+  setMessage("");
+}
+```
 
-handleSubmit
-
-() {  
-
-sendJsonMessage
-
-({  
-
-type:
-
-"chat_message"
-
-,  
-
-message,  
-
-name  
-
-});  
-
-setName
-
-(
-
-""
-
-);  
-
-setMessage
-
-(
-
-""
-
-);  
-
-}  
-
-The
-
-handleSubmit function sends the JSON message with the type set to
+The `handleSubmit` function sends the JSON message with the type set to
 "chat_message" so that on the consumer it is echoed to the group. The
 message contains two properties; the sender's name and message.
 
 Lastly, add the JSX in the return statement:
 
-\<
-
-input  
-
-name
-
-=
-
-"name"  
-
-placeholder
-
-=
-
-'Name'  
-
-onChange
-
-=
-
-{handleChangeName}  
-
-value
-
-=
-
-{name}  
-
-className
-
-=
-
-"shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"
-
-/\>  
-
-\<
-
-input  
-
-name
-
-=
-
-"message"  
-
-placeholder
-
-=
-
-'Message'  
-
-onChange
-
-=
-
-{handleChangeMessage}  
-
-value
-
-=
-
-{message}  
-
-className
-
-=
-
-"ml-2 shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"
-
-/\>  
-
-\<
-
-button
-
-className
-
-=
-
-'ml-3 bg-gray-300 px-3 py-1'
-
-onClick
-
-=
-
-{handleSubmit}\>  
-
-Submit  
-
-\</
-
-button
-
-\>  
+```jsx
+<input
+  name="name"
+  placeholder='Name'
+  onChange={handleChangeName}
+  value={name}
+  className="shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"/>
+<input
+  name="message"
+  placeholder='Message'
+  onChange={handleChangeMessage}
+  value={message}
+  className="ml-2 shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"/>
+<button className='ml-3 bg-gray-300 px-3 py-1' onClick={handleSubmit}>
+  Submit
+</button>
+```
 
 This is enough to start testing the message sending. Fill out the form
 on the frontend and click submit. You should see an error message in the
-Django terminal:
+Django terminal: `No handler for message type chat_message_echo`.
 
-No handler for message type chat_message_echo.
+Django Channels requires a custom method to be on the consumer to handle each **type** of `group_send` call. We are calling `group_send` and specifying the **type** property to be "chat_message_echo". That means we need to add a method on the consumer named "chat_message_echo" like this:
 
-Django Channels requires a custom method to be on the consumer to handle
-each **type** of
-
-group_send call. We are calling
-
-group_send and specifying the **type** property to be
-"chat_message_echo". That means we need to add a method on the consumer
-named "chat_message_echo" like this:
-
-def
-
-chat_message_echo
-
-(self, event):  
-
-print
-
-(event)  
-
-self
-
-.send_json(event)  
+```python
+def chat_message_echo(self, event):
+    print(event)
+    self.send_json(event)
+```
 
 Basically just create a function and specify the **type** value to be
 the name of the function called. All this function does is send a JSON
@@ -1659,137 +793,21 @@ chat_message_echo message.
 
 Add state that will store the message history:
 
-const
+```js
+const [messageHistory, setMessageHistory] = useState<any>([]);
+```
 
-\[
+Add a `case` to the `onMessage` handler:
 
-messageHistory
-
-,
-
-setMessageHistory
-
-\]
-
-=
-
-useState
-
-\<
-
-any
-
-\>(\[\]);  
-
-Add a
-
-case to the
-
-onMessage handler:
-
-case
-
-'chat_message_echo'
-
-:  
-
-setMessageHistory
-
-((
-
-prev
-
-:
-
-any
-
-)
-
-=\>
-
-prev.
-
-concat
-
-(data));  
-
-break
-
-;  
+```js
+case 'chat_message_echo':
+  setMessageHistory((prev:any) => prev.concat(data));
+  break;
+```
 
 Now display the message history:
 
-// inputs and button  
 
-\<
-
-hr
-
-/\>  
-
-\<
-
-ul
-
-\>  
-
-{messageHistory.
-
-map
-
-((
-
-message
-
-:
-
-any
-
-,
-
-idx
-
-:
-
-number
-
-)
-
-=\>
-
-(  
-
-\<
-
-div
-
-className
-
-=
-
-'border border-gray-200 py-3 px-3'
-
-key
-
-=
-
-{idx}\>  
-
-{message.name}: {message.message}  
-
-\</
-
-div
-
-\>  
-
-))}  
-
-\</
-
-ul
-
-\>  
 
 Now test it out! Fill in the name and message and press submit. You
 should see the messages display underneath. What's better is if you open
@@ -1804,923 +822,156 @@ At this point we've got a very basic chat app working. Everything up
 until this point was to get you familiar with the workflow of websockets
 with Django Channels and React.
 
-The
-
-consumers.py file should look like this:
-
-consumers.py
-
-from
-
-asgiref.sync
-
-import
-
-async_to_sync  
-
-from
-
-channels.generic.websocket
-
-import
-
-JsonWebsocketConsumer  
-
-  
-
-  
-
-class
-
-ChatConsumer
-
-(
-
-JsonWebsocketConsumer
-
-):  
-
-"""  
-
-This consumer is used to show user's online status,  
-
-and send notifications.  
-
-"""  
-
-  
-
-def
-
-\_\_init\_\_
-
-(self,
-
-\*
-
-args,
-
-\*\*
-
-kwargs):  
-
-super
-
-().
-
-\_\_init\_\_
-
-(args, kwargs)  
-
-self
-
-.room_name
-
-=
-
-None  
-
-  
-
-def
-
-connect
-
-(self):  
-
-print
-
-(
-
-"Connected!"
-
-)  
-
-self
-
-.room_name
-
-=
-
-"home"  
-
-self
-
-.accept()  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_add)(  
-
-self
-
-.room_name,  
-
-self
-
-.channel_name,  
-
-)  
-
-self
-
-.send_json(  
-
-{  
-
-"type"
-
-:
-
-"welcome_message"
-
-,  
-
-"message"
-
-:
-
-"Hey there! You've successfully connected!"
-
-,  
-
-}  
-
-)  
-
-  
-
-def
-
-disconnect
-
-(self, code):  
-
-print
-
-(
-
-"Disconnected!"
-
-)  
-
-return
-
-super
-
-().disconnect(code)  
-
-  
-
-def
-
-receive_json
-
-(self, content,
-
-\*\*
-
-kwargs):  
-
-message_type
-
-=
-
-content\[
-
-"type"
-
-\]  
-
-if
-
-message_type
-
-==
-
-"chat_message"
-
-:  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.room_name,  
-
-{  
-
-"type"
-
-:
-
-"chat_message_echo"
-
-,  
-
-"name"
-
-: content\[
-
-"name"
-
-\],  
-
-"message"
-
-: content\[
-
-"message"
-
-\],  
-
-},  
-
-)  
-
-return
-
-super
-
-().receive_json(content,
-
-\*\*
-
-kwargs)  
-
-  
-
-def
-
-chat_message_echo
-
-(self, event):  
-
-print
-
-(event)  
-
-self
-
-.send_json(event)  
-
-and the
-
-App.tsx file should look like this:
-
-import
-
-React, { useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-useWebSocket, { ReadyState }
-
-from
-
-"react-use-websocket"
-
-;  
-
-  
-
-export
-
-default
-
-function
-
-App
-
-()
-
-{  
-
-const
-
-\[
-
-welcomeMessage
-
-,
-
-setWelcomeMessage
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-const
-
-\[
-
-messageHistory
-
-,
-
-setMessageHistory
-
-\]
-
-=
-
-useState
-
-\<
-
-any
-
-\>
-
-\[\];  
-
-const
-
-\[
-
-message
-
-,
-
-setMessage
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-const
-
-\[
-
-name
-
-,
-
-setName
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-  
-
-const
-
-{
-
-readyState
-
-,
-
-sendJsonMessage
-
+The `consumers.py` file should look like this:
+
+```python
+# consumers.py
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import JsonWebsocketConsumer
+
+
+class ChatConsumer(JsonWebsocketConsumer):
+    """
+    This consumer is used to show user's online status,
+    and send notifications.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.room_name = None
+
+    def connect(self):
+        print("Connected!")
+        self.room_name = "home"
+        self.accept()
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_name,
+            self.channel_name,
+        )
+        self.send_json(
+            {
+                "type": "welcome_message",
+                "message": "Hey there! You've successfully connected!",
+            }
+        )
+
+    def disconnect(self, code):
+        print("Disconnected!")
+        return super().disconnect(code)
+
+    def receive_json(self, content, **kwargs):
+        message_type = content["type"]
+        if message_type == "chat_message":
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,
+                {
+                    "type": "chat_message_echo",
+                    "name": content["name"],
+                    "message": content["message"],
+                },
+            )
+        return super().receive_json(content, **kwargs)
+
+    def chat_message_echo(self, event):
+        print(event)
+        self.send_json(event)
+```
+
+and the `App.tsx` file should look like this:
+
+```tsx
+import React, { useState } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+export default function App() {
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [messageHistory, setMessageHistory] = useState < any > [];
+  const [message, setMessage] = useState("");
+  const [name, setName] = useState("");
+
+  const { readyState, sendJsonMessage } = useWebSocket("ws://127.0.0.1:8000/", {
+    onOpen: () => {
+      console.log("Connected!");
+    },
+    onClose: () => {
+      console.log("Disconnected!");
+    },
+    // onMessage handler
+    onMessage: (e) => {
+      const data = JSON.parse(e.data);
+      switch (data.type) {
+        case "welcome_message":
+          setWelcomeMessage(data.message);
+          break;
+        case "chat_message_echo":
+          setMessageHistory((prev: any) => prev.concat(data));
+          break;
+        default:
+          bash.error("Unknown message type!");
+          break;
+      }
+    }
+  });
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated"
+  }[readyState];
+
+  function handleChangeMessage(e: any) {
+    setMessage(e.target.value);
+  }
+
+  function handleChangeName(e: any) {
+    setName(e.target.value);
+  }
+
+  const handleSubmit = () => {
+    sendJsonMessage({
+      type: "chat_message",
+      message,
+      name
+    });
+    setName("");
+    setMessage("");
+  };
+
+  return (
+    <div>
+      <span>The WebSocket is currently {connectionStatus}</span>
+      <p>{welcomeMessage}</p>
+      <input
+        name="name"
+        placeholder="Name"
+        onChange={handleChangeName}
+        value={name}
+        className="shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"
+      />
+      <input
+        name="message"
+        placeholder="Message"
+        onChange={handleChangeMessage}
+        value={message}
+        className="ml-2 shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"
+      />
+      <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
+        Submit
+      </button>
+      <hr />
+      <ul>
+        {messageHistory.map((message: any, idx: number) => (
+          <div className="border border-gray-200 py-3 px-3" key={idx}>
+            {message.name}: {message.message}
+          </div>
+        ))}
+      </ul>
+    </div>
+  );
 }
-
-=
-
-useWebSocket
-
-(
-
-"ws://127.0.0.1:8000/"
-
-, {  
-
-onOpen
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Connected!"
-
-);  
-
-},  
-
-onClose
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Disconnected!"
-
-);  
-
-},  
-
-// onMessage handler  
-
-onMessage
-
-: (
-
-e
-
-)
-
-=\>
-
-{  
-
-const
-
-data
-
-=
-
-JSON
-
-.
-
-parse
-
-(e.data);  
-
-switch
-
-(data.type) {  
-
-case
-
-"welcome_message"
-
-:  
-
-setWelcomeMessage
-
-(data.message);  
-
-break
-
-;  
-
-case
-
-"chat_message_echo"
-
-:  
-
-setMessageHistory
-
-((
-
-prev
-
-:
-
-any
-
-)
-
-=\>
-
-prev.
-
-concat
-
-(data));  
-
-break
-
-;  
-
-default
-
-:  
-
-bash.
-
-error
-
-(
-
-"Unknown message type!"
-
-);  
-
-break
-
-;  
-
-}  
-
-}  
-
-});  
-
-  
-
-const
-
-connectionStatus
-
-=
-
-{  
-
-\[ReadyState.
-
-CONNECTING
-
-\]:
-
-"Connecting"
-
-,  
-
-\[ReadyState.
-
-OPEN
-
-\]:
-
-"Open"
-
-,  
-
-\[ReadyState.
-
-CLOSING
-
-\]:
-
-"Closing"
-
-,  
-
-\[ReadyState.
-
-CLOSED
-
-\]:
-
-"Closed"
-
-,  
-
-\[ReadyState.
-
-UNINSTANTIATED
-
-\]:
-
-"Uninstantiated"  
-
-}\[readyState\];  
-
-  
-
-function
-
-handleChangeMessage
-
-(
-
-e
-
-:
-
-any
-
-) {  
-
-setMessage
-
-(e.target.value);  
-
-}  
-
-  
-
-function
-
-handleChangeName
-
-(
-
-e
-
-:
-
-any
-
-) {  
-
-setName
-
-(e.target.value);  
-
-}  
-
-  
-
-const
-
-handleSubmit
-
-=
-
-()
-
-=\>
-
-{  
-
-sendJsonMessage
-
-({  
-
-type:
-
-"chat_message"
-
-,  
-
-message,  
-
-name  
-
-});  
-
-setName
-
-(
-
-""
-
-);  
-
-setMessage
-
-(
-
-""
-
-);  
-
-};  
-
-  
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-\<
-
-span
-
-\>The WebSocket is currently {connectionStatus}\</
-
-span
-
-\>  
-
-\<
-
-p
-
-\>{welcomeMessage}\</
-
-p
-
-\>  
-
-\<
-
-input  
-
-name
-
-=
-
-"name"  
-
-placeholder
-
-=
-
-"Name"  
-
-onChange
-
-=
-
-{handleChangeName}  
-
-value
-
-=
-
-{name}  
-
-className
-
-=
-
-"shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"  
-
-/\>  
-
-\<
-
-input  
-
-name
-
-=
-
-"message"  
-
-placeholder
-
-=
-
-"Message"  
-
-onChange
-
-=
-
-{handleChangeMessage}  
-
-value
-
-=
-
-{message}  
-
-className
-
-=
-
-"ml-2 shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"  
-
-/\>  
-
-\<
-
-button
-
-className
-
-=
-
-"ml-3 bg-gray-300 px-3 py-1"
-
-onClick
-
-=
-
-{handleSubmit}\>  
-
-Submit  
-
-\</
-
-button
-
-\>  
-
-\<
-
-hr
-
-/\>  
-
-\<
-
-ul
-
-\>  
-
-{messageHistory.
-
-map
-
-((
-
-message
-
-:
-
-any
-
-,
-
-idx
-
-:
-
-number
-
-)
-
-=\>
-
-(  
-
-\<
-
-div
-
-className
-
-=
-
-"border border-gray-200 py-3 px-3"
-
-key
-
-=
-
-{idx}\>  
-
-{message.name}: {message.message}  
-
-\</
-
-div
-
-\>  
-
-))}  
-
-\</
-
-ul
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
+```
 
 ------------------------------------------------------------------------
 
@@ -2758,754 +1009,135 @@ that we can set the user.
 
 To get started, install a few packages:
 
-npm
-
-i
-
-axios
-
-formik
-
-react-router-dom  
-
-Next move everything inside
-
-App.tsx into a new file inside a
-
-components folder. Name the file
-
-Chat.tsx and export the function as a named export with the component
-name "Chat":
-
-Chat.tsx
-
-export
-
-function
-
-Chat
-
-() {  
-
-const
-
-\[
-
-welcomeMessage
-
-,
-
-setWelcomeMessage
-
-\]
-
-=
-
-useState
-
-(
-
-""
-
-);  
-
-const
-
-\[
-
-messageHistory
-
-,
-
-setMessageHistory
-
-\]
-
-=
-
-useState
-
-\<
-
-any
-
-\>(\[\]);  
-
-  
-
-// ...  
-
-}  
-
-Create a new file
-
-Navbar.tsx inside the
-
-components folder:
-
-Navbar.tsx
-
-import
-
-React
-
-from
-
-"react"
-
-;  
-
-import
-
-{ Link, Outlet }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-export
-
-function
-
-Navbar
-
-() {  
-
-return
-
-(  
-
-\<\>  
-
-\<
-
-nav
-
-className
-
-=
-
-"bg-white border-gray-200 px-4 sm:px-6 py-2.5 rounded dark:bg-gray-800"
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"max-w-5xl mx-auto flex flex-wrap justify-between items-center"
-
-\>  
-
-\<
-
-Link
-
-to
-
-=
-
-"/"
-
-className
-
-=
-
-"flex items-center"
-
-\>  
-
-\<
-
-span
-
-className
-
-=
-
-"self-center text-xl font-semibold whitespace-nowrap dark:text-white"
-
-\>  
-
-Conversa DJ  
-
-\</
-
-span
-
-\>  
-
-\</
-
-Link
-
-\>  
-
-\<
-
-button  
-
-data-collapse-toggle
-
-=
-
-"mobile-menu"  
-
-type
-
-=
-
-"button"  
-
-className
-
-=
-
-"inline-flex items-center p-2 ml-3 text-sm text-gray-500 rounded-lg
-md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2
-focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700
-dark:focus:ring-gray-600"  
-
-aria-controls
-
-=
-
-"mobile-menu"  
-
-aria-expanded
-
-=
-
-"false"  
-
-\>  
-
-\<
-
-span
-
-className
-
-=
-
-"sr-only"
-
-\>Open main menu\</
-
-span
-
-\>  
-
-\<
-
-svg  
-
-className
-
-=
-
-"w-6 h-6"  
-
-fill
-
-=
-
-"currentColor"  
-
-viewBox
-
-=
-
-"0 0 20 20"  
-
-xmlns
-
-=
-
-"http://www.w3.org/2000/svg"  
-
-\>  
-
-\<
-
-path  
-
-fillRule
-
-=
-
-"evenodd"  
-
-d
-
-=
-
-"M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1
-0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0
-01-1-1z"  
-
-clipRule
-
-=
-
-"evenodd"  
-
-\>\</
-
-path
-
-\>  
-
-\</
-
-svg
-
-\>  
-
-\<
-
-svg  
-
-className
-
-=
-
-"hidden w-6 h-6"  
-
-fill
-
-=
-
-"currentColor"  
-
-viewBox
-
-=
-
-"0 0 20 20"  
-
-xmlns
-
-=
-
-"http://www.w3.org/2000/svg"  
-
-\>  
-
-\<
-
-path  
-
-fillRule
-
-=
-
-"evenodd"  
-
-d
-
-=
-
-"M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414
-1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293
-4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"  
-
-clipRule
-
-=
-
-"evenodd"  
-
-\>\</
-
-path
-
-\>  
-
-\</
-
-svg
-
-\>  
-
-\</
-
-button
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"hidden w-full md:block md:w-auto"
-
-id
-
-=
-
-"mobile-menu"
-
-\>  
-
-\<
-
-ul
-
-className
-
-=
-
-"flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 md:text-sm
-md:font-medium"
-
-\>  
-
-\<
-
-li
-
-\>  
-
-\<
-
-Link  
-
-to
-
-=
-
-"/"  
-
-className
-
-=
-
-"block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"  
-
-aria-current
-
-=
-
-"page"  
-
-\>  
-
-Chats  
-
-\</
-
-Link
-
-\>  
-
-\</
-
-li
-
-\>  
-
-\<
-
-li
-
-\>  
-
-\<
-
-Link  
-
-to
-
-=
-
-"/login"  
-
-className
-
-=
-
-"block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"  
-
-\>  
-
-Login  
-
-\</
-
-Link
-
-\>  
-
-\</
-
-li
-
-\>  
-
-\</
-
-ul
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-nav
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"max-w-5xl mx-auto py-6"
-
-\>  
-
-\<
-
-Outlet
-
-/\>  
-
-\</
-
-div
-
-\>  
-
-\</\>  
-
-);  
-
-}  
-
-Create another new file,
-
-Login.tsx:
-
-Login.tsx
-
-export
-
-function
-
-Login
-
-() {  
-
-return
-
-\<
-
-div
-
-\>Login - more on this soon\</
-
-div
-
-\>;  
-
-}  
-
-Now replace everything in
-
-App.tsx with:
-
-App.tsx
-
-import
-
-React
-
-from
-
-"react"
-
-;  
-
-import
-
-{ BrowserRouter, Route, Routes }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ Chat }
-
-from
-
-"./components/Chat"
-
-;  
-
-import
-
-{ Login }
-
-from
-
-"./components/Login"
-
-;  
-
-import
-
-{ Navbar }
-
-from
-
-"./components/Navbar"
-
-;  
-
-  
-
-export
-
-default
-
-function
-
-App
-
-()
-
-{  
-
-return
-
-(  
-
-\<
-
-BrowserRouter
-
-\>  
-
-\<
-
-Routes
-
-\>  
-
-\<
-
-Route
-
-path
-
-=
-
-"/"
-
-element
-
-=
-
-{\<
-
-Navbar
-
-/\>}\>  
-
-\<
-
-Route
-
-path
-
-=
-
-""
-
-element
-
-=
-
-{\<
-
-Chat
-
-/\>} /\>  
-
-\<
-
-Route
-
-path
-
-=
-
-"login"
-
-element
-
-=
-
-{\<
-
-Login
-
-/\>} /\>  
-
-\</
-
-Route
-
-\>  
-
-\</
-
-Routes
-
-\>  
-
-\</
-
-BrowserRouter
-
-\>  
-
-);  
-
-}  
+```bash
+npm i axios formik react-router-dom
+```
+
+Next move everything inside `App.tsx` into a new file inside a `components` folder. Name the file `Chat.tsx` and export the function as a named export with the component name "Chat":
+
+```tsx
+export function Chat() {
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [messageHistory, setMessageHistory] = useState<any>([]);
+
+  // ...
+}
+```
+
+Create a new file `Navbar.tsx` inside the `components` folder:
+
+```tsx
+// Navbar.tsx
+import React from "react";
+import { Link, Outlet } from "react-router-dom";
+
+export function Navbar() {
+  return (
+    <>
+      <nav className="bg-white border-gray-200 px-4 sm:px-6 py-2.5 rounded dark:bg-gray-800">
+        <div className="max-w-5xl mx-auto flex flex-wrap justify-between items-center">
+          <Link to="/" className="flex items-center">
+            <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
+              Conversa DJ
+            </span>
+          </Link>
+          <button
+            data-collapse-toggle="mobile-menu"
+            type="button"
+            className="inline-flex items-center p-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            <span className="sr-only">Open main menu</span>
+            <svg
+              className="w-6 h-6"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+            <svg
+              className="hidden w-6 h-6"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+          </button>
+          <div className="hidden w-full md:block md:w-auto" id="mobile-menu">
+            <ul className="flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium">
+              <li>
+                <Link
+                  to="/"
+                  className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
+                  aria-current="page"
+                >
+                  Chats
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/login"
+                  className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
+                >
+                  Login
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <div className="max-w-5xl mx-auto py-6">
+        <Outlet />
+      </div>
+    </>
+  );
+}
+```
+
+Create another new file, `Login.tsx`:
+
+```tsx
+// Login.tsx
+export function Login() {
+  return <div>Login - more on this soon</div>;
+}
+```
+
+Now replace everything in `App.tsx` with:
+
+```tsx
+// App.tsx
+import React from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import { Chat } from "./components/Chat";
+import { Login } from "./components/Login";
+import { Navbar } from "./components/Navbar";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navbar />}>
+          <Route path="" element={<Chat />} />
+          <Route path="login" element={<Login />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
 
 Test the navigation in the navbar. You should see the login page and
 chat app display when navigating between the two pages.
@@ -3514,885 +1146,150 @@ Now we need to add a few files to manage the user state. We're going to
 use <a href="https://reactjs.org/docs/context.html"
 class="text-lightBlue hover:text-lightBlueHover ease-in-out transition duration-150"
 target="_blank" rel="noopener noreferrer">React Context</a>. First
-create the folders
-
-contexts,
-
-services and
-
-models.
-
-Inside
-
-models create
-
-User.ts:
-
-User.ts
-
-export
-
-interface
-
-UserModel
-
-{  
-
-username
-
-:
-
-string
-
-;  
-
-token
-
-:
-
-string
-
-;  
-
-}  
-
-Inside
-
-contexts create a file
-
-AuthContext.tsx:
-
-AuthContext.tsx
-
-import
-
-axios, { AxiosInstance }
-
-from
-
-"axios"
-
-;  
-
-import
-
-React, { createContext, ReactNode, useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-{ useNavigate }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ UserModel }
-
-from
-
-"../models/User"
-
-;  
-
-import
-
-authHeader
-
-from
-
-"../services/AuthHeader"
-
-;  
-
-import
-
-AuthService
-
-from
-
-"../services/AuthService"
-
-;  
-
-  
-
-const
-
-DefaultProps
-
-=
-
-{  
-
-login
-
-: ()
-
-=\>
-
-null
-
-,  
-
-logout
-
-: ()
-
-=\>
-
-null
-
-,  
-
-authAxios: axios,  
-
-user:
-
-null  
-
-};  
-
-  
-
-export
-
-interface
-
-AuthProps
-
-{  
-
-login
-
-:
-
-(
-
-username
-
-:
-
-string
-
-,
-
-password
-
-:
-
-string
-
-)
-
-=\>
-
-any
-
-;  
-
-logout
-
-:
-
-()
-
-=\>
-
-void
-
-;  
-
-authAxios
-
-:
-
-AxiosInstance
-
-;  
-
-user
-
-:
-
-UserModel
-
-\|
-
-null
-
-;  
-
-}  
-
-  
-
-export
-
-const
-
-AuthContext
-
-=
-
-createContext
-
-\<
-
-AuthProps
-
-\>(DefaultProps);  
-
-  
-
-export
-
-const
-
-AuthContextProvider
-
-:
-
-React
-
-.
-
-FC
-
-\<{
-
-children
-
-:
-
-ReactNode
-
-}\>
-
-=
-
-({
-
-children
-
-})
-
-=\>
-
-{  
-
-const
-
-navigate
-
-=
-
-useNavigate
-
-();  
-
-const
-
-\[
-
-user
-
-,
-
-setUser
-
-\]
-
-=
-
-useState
-
-(()
-
-=\>
-
-AuthService.
-
-getCurrentUser
-
-());  
-
-  
-
-async
-
-function
-
-login
-
-(
-
-username
-
-:
-
-string
-
-,
-
-password
-
-:
-
-string
-
-) {  
-
-const
-
-data
-
-=
-
-await
-
-AuthService.
-
-login
-
-(username, password);  
-
-setUser
-
-(data);  
-
-return
-
-data;  
-
-}  
-
-  
-
-function
-
-logout
-
-() {  
-
-AuthService.
-
-logout
-
-();  
-
-setUser
-
-(
-
-null
-
-);  
-
-navigate
-
-(
-
-"/login"
-
-);  
-
-}  
-
-  
-
-// axios instance for making requests  
-
-const
-
-authAxios
-
-=
-
-axios.
-
-create
-
-();  
-
-  
-
-// request interceptor for adding token  
-
-authAxios.interceptors.request.
-
-use
-
-((
-
-config
-
-)
-
-=\>
-
-{  
-
-// add token to request headers  
-
-config.headers
-
-=
-
-authHeader
-
-();  
-
-return
-
-config;  
-
-});  
-
-  
-
-authAxios.interceptors.response.
-
-use
-
-(  
-
-(
-
-response
-
-)
-
-=\>
-
-{  
-
-return
-
-response;  
-
-},  
-
-(
-
-error
-
-)
-
-=\>
-
-{  
-
-if
-
-(error.response.status
-
-===
-
-401
-
-) {  
-
-logout
-
-();  
-
-}  
-
-return
-
-Promise
-
-.
-
-reject
-
-(error);  
-
-}  
-
-);  
-
-  
-
-return
-
-(  
-
-\<
-
-AuthContext.Provider
-
-value
-
-=
-
-{{ user, login, logout, authAxios }}\>  
-
-{children}  
-
-\</
-
-AuthContext.Provider
-
-\>  
-
-);  
-
-};  
-
-In this context we are providing an
-
-axios instance configured with authenticated headers, as well as storing
-the user and login functions in React state.
-
-Next create the file
-
-AuthHeaders.ts inside the
-
-services folder:
-
-AuthHeaders.ts
-
-import
-
-{ AxiosRequestHeaders }
-
-from
-
-"axios"
-
-;  
-
-  
-
-export
-
-default
-
-function
-
-authHeader
-
-()
-
-:
-
-AxiosRequestHeaders
-
-{  
-
-const
-
-localstorageUser
-
-=
-
-localStorage.
-
-getItem
-
-(
-
-"user"
-
-);  
-
-if
-
-(
-
-!
-
-localstorageUser) {  
-
-return
-
-{};  
-
-}  
-
-const
-
-user
-
-=
-
-JSON
-
-.
-
-parse
-
-(localstorageUser);  
-
-if
-
-(user
-
-&&
-
-user.token) {  
-
-return
-
-{ Authorization:
-
-\`Token ${
-
-user
-
-.
-
-token
-
-}\`
-
-};  
-
-}  
-
-return
-
-{};  
-
-}  
+create the folders `contexts`, `services` and `models`.
+
+Inside `models` create `User.ts`:
+
+```ts
+// User.ts
+export interface UserModel {
+  username: string;
+  token: string;
+}
+```
+
+Inside `contexts` create a file `AuthContext.tsx`:
+
+```tsx
+// AuthContext.tsx
+import axios, { AxiosInstance } from "axios";
+import React, { createContext, ReactNode, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { UserModel } from "../models/User";
+import authHeader from "../services/AuthHeader";
+import AuthService from "../services/AuthService";
+
+const DefaultProps = {
+  login: () => null,
+  logout: () => null,
+  authAxios: axios,
+  user: null
+};
+
+export interface AuthProps {
+  login: (username: string, password: string) => any;
+  logout: () => void;
+  authAxios: AxiosInstance;
+  user: UserModel | null;
+}
+
+export const AuthContext = createContext<AuthProps>(DefaultProps);
+
+export const AuthContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(() => AuthService.getCurrentUser());
+
+  async function login(username: string, password: string) {
+    const data = await AuthService.login(username, password);
+    setUser(data);
+    return data;
+  }
+
+  function logout() {
+    AuthService.logout();
+    setUser(null);
+    navigate("/login");
+  }
+
+  // axios instance for making requests
+  const authAxios = axios.create();
+
+  // request interceptor for adding token
+  authAxios.interceptors.request.use((config) => {
+    // add token to request headers
+    config.headers = authHeader();
+    return config;
+  });
+
+  authAxios.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      if (error.response.status === 401) {
+        logout();
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, authAxios }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+In this context we are providing an `axios` instance configured with authenticated headers, as well as storing the user and login functions in React state.
+
+Next create the file `AuthHeaders.ts` inside the `services` folder:
+
+```ts
+// AuthHeaders.ts
+import { AxiosRequestHeaders } from "axios";
+
+export default function authHeader(): AxiosRequestHeaders {
+  const localstorageUser = localStorage.getItem("user");
+  if (!localstorageUser) {
+    return {};
+  }
+  const user = JSON.parse(localstorageUser);
+  if (user && user.token) {
+    return { Authorization: `Token ${user.token}` };
+  }
+  return {};
+}
+```
 
 This just provides a helper function to format the headers for
 authenticated requests.
 
-Create another file inside the
+Create another file inside the `services` folder, `AuthService.ts`:
 
-services folder,
-
-AuthService.ts:
-
+```ts
 AuthService.ts
-
-import
-
-axios
-
-from
-
-"axios"
-
-;  
-
-  
-
-import
-
-{ UserModel }
-
-from
-
-"../models/User"
-
-;  
-
-  
-
-class
-
-AuthService
-
-{  
-
-setUserInLocalStorage
-
-(
-
-data
-
-:
-
-UserModel
-
-) {  
-
-localStorage.
-
-setItem
-
-(
-
-"user"
-
-,
-
-JSON
-
-.
-
-stringify
-
-(data));  
-
-}  
-
-  
-
-async
-
-login
-
-(
-
-username
-
-:
-
-string
-
-,
-
-password
-
-:
-
-string
-
-)
-
-:
-
-Promise
-
-\<
-
-UserModel
-
-\> {  
-
-const
-
-response
-
-=
-
-await
-
-axios.
-
-post
-
-(
-
-"http://127.0.0.1:8000/auth-token/"
-
-, { username, password });  
-
-if
-
-(
-
-!
-
-response.data.token) {  
-
-return
-
-response.data;  
-
-}  
-
-this
-
-.
-
-setUserInLocalStorage
-
-(response.data);  
-
-return
-
-response.data;  
-
-}  
-
-  
-
-logout
-
-() {  
-
-localStorage.
-
-removeItem
-
-(
-
-"user"
-
-);  
-
-}  
-
-  
-
-getCurrentUser
-
-() {  
-
-const
-
-user
-
-=
-
-localStorage.
-
-getItem
-
-(
-
-"user"
-
-)
-
-!
-
-;  
-
-return
-
-JSON
-
-.
-
-parse
-
-(user);  
-
-}  
-
-}  
-
-  
-
-export
-
-default
-
-new
-
-AuthService
-
-()
-
-;  
+import axios from "axios";
+
+import { UserModel } from "../models/User";
+
+class AuthService {
+  setUserInLocalStorage(data: UserModel) {
+    localStorage.setItem("user", JSON.stringify(data));
+  }
+
+  async login(username: string, password: string): Promise<UserModel> {
+    const response = await axios.post("http://127.0.0.1:8000/auth-token/", { username, password });
+    if (!response.data.token) {
+      return response.data;
+    }
+    this.setUserInLocalStorage(response.data);
+    return response.data;
+  }
+
+  logout() {
+    localStorage.removeItem("user");
+  }
+
+  getCurrentUser() {
+    const user = localStorage.getItem("user")!;
+    return JSON.parse(user);
+  }
+}
+
+export default new AuthService();
+```
 
 This class implements the logic of storing the user in browser
 localstorage so that it persists when refreshing the page. This is just
@@ -4400,849 +1297,162 @@ one way of handling the persistent storage. You can also use cookies but
 that is outside the scope for this tutorial.
 
 With these files setup we can now wrap the app inside the context so
-that the context is available throughout the app. Inside
-
-App.tsx make the following change:
-
-App.tsx
-
-// imports  
-
-import
-
-{ AuthContextProvider }
-
-from
-
-"./contexts/AuthContext"
-
-;  
-
-  
-
-export
-
-default
-
-function
-
-App
-
-()
-
-{  
-
-return
-
-(  
-
-\<
-
-BrowserRouter
-
-\>  
-
-\<
-
-Routes
-
-\>  
-
-\<
-
-Route  
-
-path
-
-=
-
-"/"  
-
-element
-
-=
-
-{  
-
-\<
-
-AuthContextProvider
-
-\>  
-
-\<
-
-Navbar
-
-/\>  
-
-\</
-
-AuthContextProvider
-
-\>  
-
-}  
-
-\>  
-
-\<
-
-Route
-
-path
-
-=
-
-""
-
-element
-
-=
-
-{\<
-
-Chat
-
-/\>} /\>  
-
-\<
-
-Route
-
-path
-
-=
-
-"login"
-
-element
-
-=
-
-{\<
-
-Login
-
-/\>} /\>  
-
-\</
-
-Route
-
-\>  
-
-\</
-
-Routes
-
-\>  
-
-\</
-
-BrowserRouter
-
-\>  
-
-);  
-
-}  
-
-With the context available we can now go to
-
-Navbar.tsx and change the navbar based on if the user is authenticated.
-Replace the Login link with the following:
-
+that the context is available throughout the app. Inside `App.tsx` make the following change:
+
+```tsx
+// App.tsx
+// imports
+import { AuthContextProvider } from "./contexts/AuthContext";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <AuthContextProvider>
+              <Navbar />
+            </AuthContextProvider>
+          }
+        >
+          <Route path="" element={<Chat />} />
+          <Route path="login" element={<Login />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+With the context available we can now go to `Navbar.tsx` and change the navbar based on if the user is authenticated. Replace the Login link with the following:
+
+```tsx
 Navbar.tsx
-
-{  
-
-!
-
-user
-
-?
-
-(  
-
-\<
-
-li
-
-\>  
-
-\<
-
-Link
-
-to
-
-=
-
-"/login"
-
-className
-
-=
-
-"block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
-
-\>  
-
-Login  
-
-\</
-
-Link
-
-\>  
-
-\</
-
-li
-
-\>  
-
-)
-
-:
-
-(  
-
-\<\>  
-
-\<
-
-span
-
-className
-
-=
-
-"text-white"
-
-\>Logged in: {user.username}\</
-
-span
-
-\>  
-
-\<
-
-button
-
-className
-
-=
-
-"block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
-
-onClick
-
-=
-
-{logout}\>  
-
-Logout  
-
-\</
-
-button
-
-\>  
-
-\</\>  
-
-);  
-
-}  
+{
+  !user ? (
+    <li>
+      <Link to="/login" className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white">
+        Login
+      </Link>
+    </li>
+  ) : (
+    <>
+      <span className="text-white">Logged in: {user.username}</span>
+      <button className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white" onClick={logout}>
+        Logout
+      </button>
+    </>
+  );
+}
+```
 
 Add the import at the top of the file:
 
-import
+```tsx
+import { AuthContext } from "../contexts/AuthContext";
+```
 
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
 
 And extract the functions from the context in the component:
 
-const
+```tsx
+const { user, logout } = useContext(AuthContext);
+```
 
-{
+Now create another component `Login.tsx`:
 
-user
+```tsx
+// Login.tsx
+import { useFormik } from "formik";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-,
+import { AuthContext } from "../contexts/AuthContext";
 
-logout
+export function Login() {
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const { user, login } = useContext(AuthContext);
 
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      password: ""
+    },
+    onSubmit: async (values, { setSubmitting }) => {
+      setSubmitting(true);
+      const { username, password } = values;
+      const res = await login(username, password);
+      if (res.error || res.data) {
+        if (res.data && res.data.detail) {
+          setError(res.data.detail);
+        }
+      } else {
+        navigate("/");
+      }
+      setSubmitting(false);
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user]);
+
+  return (
+    <div>
+      <div className="w-full max-w-md space-y-8">
+        <div>
+          <h1 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to your account</h1>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={formik.handleSubmit}>
+          {error && <div>{JSON.stringify(error)}</div>}
+
+          <div className="-space-y-px rounded-md">
+            <input
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              type="text"
+              name="username"
+              placeholder="Username"
+              className="border-gray-300 text-gray-900 placeholder-gray-300 focus:ring-gray-500 focus:border-gray-500 block w-full pr-10 focus:outline-none sm:text-sm rounded-md"
+            />
+            <input
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              type="password"
+              name="password"
+              className="border-gray-300 text-gray-900 placeholder-gray-300 focus:ring-gray-500 focus:border-gray-500 block w-full pr-10 focus:outline-none sm:text-sm rounded-md"
+              placeholder="Password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="group relative flex w-full justify-center rounded-md border border-transparent bg-sky-600 py-2 px-4 text-sm font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+          >
+            {formik.isSubmitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }
+```
 
-=
+Here we are using `formik` to handle the state management of the form. When you press the
+submit button it sends a request to login and redirects you if it is successful.
 
-useContext
+The last thing to do is to go into the `config/settings/base.py` and replace this line:
 
-(AuthContext);  
-
-Now create another component
-
-Login.tsx:
-
-Login.tsx
-
-import
-
-{ useFormik }
-
-from
-
-"formik"
-
-;  
-
-import
-
-{ useContext, useEffect, useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-{ useNavigate }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
-
-  
-
-export
-
-function
-
-Login
-
-() {  
-
-const
-
-navigate
-
-=
-
-useNavigate
-
-();  
-
-const
-
-\[
-
-error
-
-,
-
-setError
-
-\]
-
-=
-
-useState
-
-(
-
-null
-
-);  
-
-const
-
-{
-
-user
-
-,
-
-login
-
-}
-
-=
-
-useContext
-
-(AuthContext);  
-
-  
-
-const
-
-formik
-
-=
-
-useFormik
-
-({  
-
-initialValues: {  
-
-username:
-
-""
-
-,  
-
-password:
-
-""  
-
-},  
-
-onSubmit
-
-:
-
-async
-
-(
-
-values
-
-, {
-
-setSubmitting
-
-})
-
-=\>
-
-{  
-
-setSubmitting
-
-(
-
-true
-
-);  
-
-const
-
-{
-
-username
-
-,
-
-password
-
-}
-
-=
-
-values;  
-
-const
-
-res
-
-=
-
-await
-
-login
-
-(username, password);  
-
-if
-
-(res.error
-
-\|\|
-
-res.data) {  
-
-if
-
-(res.data
-
-&&
-
-res.data.detail) {  
-
-setError
-
-(res.data.detail);  
-
-}  
-
-}
-
-else
-
-{  
-
-navigate
-
-(
-
-"/"
-
-);  
-
-}  
-
-setSubmitting
-
-(
-
-false
-
-);  
-
-}  
-
-});  
-
-  
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-if
-
-(user) {  
-
-navigate
-
-(
-
-"/"
-
-);  
-
-}  
-
-}, \[user\]);  
-
-  
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"w-full max-w-md space-y-8"
-
-\>  
-
-\<
-
-div
-
-\>  
-
-\<
-
-h1
-
-className
-
-=
-
-"mt-6 text-3xl font-extrabold text-gray-900"
-
-\>Sign in to your account\</
-
-h1
-
-\>  
-
-\</
-
-div
-
-\>  
-
-  
-
-\<
-
-form
-
-className
-
-=
-
-"mt-8 space-y-6"
-
-onSubmit
-
-=
-
-{formik.handleSubmit}\>  
-
-{error
-
-&&
-
-\<
-
-div
-
-\>{
-
-JSON
-
-.
-
-stringify
-
-(error)}\</
-
-div
-
-\>}  
-
-  
-
-\<
-
-div
-
-className
-
-=
-
-"-space-y-px rounded-md"
-
-\>  
-
-\<
-
-input  
-
-value
-
-=
-
-{formik.values.username}  
-
-onChange
-
-=
-
-{formik.handleChange}  
-
-type
-
-=
-
-"text"  
-
-name
-
-=
-
-"username"  
-
-placeholder
-
-=
-
-"Username"  
-
-className
-
-=
-
-"border-gray-300 text-gray-900 placeholder-gray-300 focus:ring-gray-500
-focus:border-gray-500 block w-full pr-10 focus:outline-none sm:text-sm
-rounded-md"  
-
-/\>  
-
-\<
-
-input  
-
-value
-
-=
-
-{formik.values.password}  
-
-onChange
-
-=
-
-{formik.handleChange}  
-
-type
-
-=
-
-"password"  
-
-name
-
-=
-
-"password"  
-
-className
-
-=
-
-"border-gray-300 text-gray-900 placeholder-gray-300 focus:ring-gray-500
-focus:border-gray-500 block w-full pr-10 focus:outline-none sm:text-sm
-rounded-md"  
-
-placeholder
-
-=
-
-"Password"  
-
-/\>  
-
-\</
-
-div
-
-\>  
-
-  
-
-\<
-
-button  
-
-type
-
-=
-
-"submit"  
-
-className
-
-=
-
-"group relative flex w-full justify-center rounded-md border
-border-transparent bg-sky-600 py-2 px-4 text-sm font-medium text-white
-hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500
-focus:ring-offset-2"  
-
-\>  
-
-{formik.isSubmitting
-
-?
-
-"Signing in..."
-
-:
-
-"Sign in"
-
-}  
-
-\</
-
-button
-
-\>  
-
-\</
-
-form
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
-
-Here we are using
-
-formik to handle the state management of the form. When you press the
-submit button it sends a request to login and redirects you if it is
-successful.
-
-The last thing to do is to go into the
-
-config/settings/base.py and replace this line:
-
-config/settings/base.py
-
-\# CORS_URLS_REGEX = r"^/api/.\*$" \# replace this line  
-
-CORS_ALLOWED_ORIGINS
-
-=
-
-\[
-
-"http://localhost:3000"
-
-\]
-
-\# add this line  
+```python
+# config/settings/base.py
+# CORS_URLS_REGEX = r"^/api/.*$"  # replace this line
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]  # add this line
+``` 
 
 Here we are specifying the allowed origins which is including the React
 frontend.
@@ -5252,882 +1462,226 @@ can login with. If you don't, run the
 
 createsuperuser command to create a new user. You will login with your
 username and password. You should see the navbar change and be
-redirected to the
-
-/chats page afterwards.
+redirected to the `/chats` page afterwards.
 
 ### Protected Routes
 
-Using
-
-react-router-dom we can configure certain paths to be unaccessible
+Using `react-router-dom` we can configure certain paths to be unaccessible
 unless you are logged in.
 
-Create a new component file
+Create a new component file `ProtectedRoute.tsx` and add the following:
 
-ProtectedRoute.tsx and add the following:
+```tsx
+// ProtectedRoute.tsx
+import { useContext } from "react";
+import { Navigate } from "react-router-dom";
 
-ProtectedRoute.tsx
+import { AuthContext } from "../contexts/AuthContext";
 
-import
-
-{ useContext }
-
-from
-
-"react"
-
-;  
-
-import
-
-{ Navigate }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
-
-  
-
-export
-
-function
-
-ProtectedRoute
-
-({
-
-children
-
+export function ProtectedRoute({ children }: { children: any }) {
+  const { user } = useContext(AuthContext);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
+```
 
-:
-
-{
-
-children
-
-:
-
-any
-
-}) {  
-
-const
-
-{
-
-user
-
-}
-
-=
-
-useContext
-
-(AuthContext);  
-
-if
-
-(
-
-!
-
-user) {  
-
-return
-
-\<
-
-Navigate
-
-to
-
-=
-
-"/login"
-
-replace
-
-/\>;  
-
-}  
-
-return
-
-children;  
-
-}  
-
-Then inside
-
-App.tsx wrap the routes inside this component so that it redirects the
+Then inside `App.tsx` wrap the routes inside this component so that it redirects the
 user to the login page if they are not authenticated:
 
-App.tsx
-
-\<
-
-Route  
-
-path
-
-=
-
-""  
-
-element
-
-=
-
-{  
-
-\<
-
-ProtectedRoute
-
-\>  
-
-\<
-
-Conversations
-
-/\>  
-
-\</
-
-ProtectedRoute
-
-\>  
-
-}  
-
-/\>  
-
-\<
-
-Route  
-
-path
-
-=
-
-"chats/:conversationName"  
-
-element
-
-=
-
-{  
-
-\<
-
-ProtectedRoute
-
-\>  
-
-\<
-
-Chat
-
-/\>  
-
-\</
-
-ProtectedRoute
-
-\>  
-
-}  
-
-/\>  
+```tsx
+// App.tsx
+<Route
+  path=""
+  element={
+    <ProtectedRoute>
+      <Conversations />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="chats/:conversationName"
+  element={
+    <ProtectedRoute>
+      <Chat />
+    </ProtectedRoute>
+  }
+/>
+```
 
 ### Websocket Authentication
 
 The reason we added authentication was actually to get to this step; to
 add authentication to the websockets.
 
-On the frontend this just requires a small change to the
+On the frontend this just requires a small change to the `useWebSocket` hook:
 
-useWebSocket hook:
+```tsx
+useWebSocket(user ? "ws://127.0.0.1:8000/" : null, {
+    queryParams: {
+      token: user ? user.token : "",
+    }
+    // rest of the settings
+)
+```
 
-useWebSocket
+This will add a query parameter of `?token=3h584h3..yourtoken..324gne943` to the end of the websocket URL.
+Additionally, it will ensure that we only connect to the websocket when there is a logged in user.
 
-(user
-
-?
-
-"ws://127.0.0.1:8000/"
-
-:
-
-null
-
-, {  
-
-queryParams: {  
-
-token: user
-
-?
-
-user.token
-
-:
-
-""
-
-,  
-
-}  
-
-// rest of the settings  
-
-)  
-
-This will add a query parameter of
-
-?token=3h584h3..yourtoken..324gne943 to the end of the websocket URL.
-Additionally, it will ensure that we only connect to the websocket when
-there is a logged in user.
-
-On the Django side this will require a bit more work. You can read more
-about setting up authentication in the <a
-href="https://channels.readthedocs.io/en/stable/topics/authentication.html#custom-authentication"
-class="text-lightBlue hover:text-lightBlueHover ease-in-out transition duration-150"
-target="_blank" rel="noopener noreferrer">Channels documentation</a>. We
+On the Django side this will require a bit more work. You can read more about setting up authentication in the <a href="https://channels.readthedocs.io/en/stable/topics/authentication.html#custom-authentication" class="text-lightBlue hover:text-lightBlueHover ease-in-out transition duration-150" target="_blank" rel="noopener noreferrer">Channels documentation</a>. We
 are going to add middleware that looks for the
 
 ?token query parameter in the URL and then authenticate the token.
 
-Since we are using the
+Since we are using the `rest_framework.authtoken` as the token module, you can adapt the `TokenAuthentication` class from the file `rest_framework.authentication.TokenAuthentication`.
 
-rest_framework.authtoken as the token module, you can adapt the
+Create a file inside the `chats` app called `middleware.py`:
 
-TokenAuthentication class from the file
+```python
+# conserva_dj/chats/middleware.py
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import AuthenticationFailed
 
-rest_framework.authentication.TokenAuthentication.
+User = get_user_model()
 
-Create a file inside the
 
-chats app called
+class TokenAuthentication:
+    """
+    Simple token based authentication.
 
-middleware.py:
+    Clients should authenticate by passing the token key in the query parameters.
+    For example:
 
-conserva_dj/chats/middleware.py
+        ?token=401f7ac837da42b97f613d789819ff93537bee6a
+    """
 
-from
+    model = None
 
-django.contrib.auth
+    def get_model(self):
+        if self.model is not None:
+            return self.model
+        from rest_framework.authtoken.models import Token
+        return Token
 
-import
+    """
+    A custom token model may be used, but must have the following properties.
 
-get_user_model  
+    * key -- The string identifying the token
+    * user -- The user to which the token belongs
+    """
 
-from
+    def authenticate_credentials(self, key):
+        model = self.get_model()
+        try:
+            token = model.objects.select_related("user").get(key=key)
+        except model.DoesNotExist:
+            raise AuthenticationFailed(_("Invalid token."))
 
-django.utils.translation
+        if not token.user.is_active:
+            raise AuthenticationFailed(_("User inactive or deleted."))
 
-import
+        return token.user
+```
 
-gettext_lazy
-
-as
-
-\_  
-
-from
-
-rest_framework.exceptions
-
-import
-
-AuthenticationFailed  
-
-  
-
-User
-
-=
-
-get_user_model()  
-
-  
-
-  
-
-class
-
-TokenAuthentication
-
-:  
-
-"""  
-
-Simple token based authentication.  
-
-  
-
-Clients should authenticate by passing the token key in the query
-parameters.  
-
-For example:  
-
-  
-
-?token=401f7ac837da42b97f613d789819ff93537bee6a  
-
-"""  
-
-  
-
-model
-
-=
-
-None  
-
-  
-
-def
-
-get_model
-
-(self):  
-
-if
-
-self
-
-.model
-
-is
-
-not
-
-None
-
-:  
-
-return
-
-self
-
-.model  
-
-from
-
-rest_framework.authtoken.models
-
-import
-
-Token  
-
-return
-
-Token  
-
-  
-
-"""  
-
-A custom token model may be used, but must have the following
-properties.  
-
-  
-
-\* key -- The string identifying the token  
-
-\* user -- The user to which the token belongs  
-
-"""  
-
-  
-
-def
-
-authenticate_credentials
-
-(self, key):  
-
-model
-
-=
-
-self
-
-.get_model()  
-
-try
-
-:  
-
-token
-
-=
-
-model.objects.select_related(
-
-"user"
-
-).get(
-
-key
-
-=
-
-key)  
-
-except
-
-model.DoesNotExist:  
-
-raise
-
-AuthenticationFailed(\_(
-
-"Invalid token."
-
-))  
-
-  
-
-if
-
-not
-
-token.user.is_active:  
-
-raise
-
-AuthenticationFailed(\_(
-
-"User inactive or deleted."
-
-))  
-
-  
-
-return
-
-token.user  
-
-This class is based off the already existing
-
-TokenAuthentication class that authenticates requests to the Django Rest
-Framework API. The only difference is that this class doesn't check the
-request headers for the
-
-Authentication Token xyz header - instead we will just provide the token
+This class is based off the already existing `TokenAuthentication` class that authenticates requests to the Django Rest Framework API. The only difference is that this class doesn't check the
+request headers for the `Authentication Token xyz` header - instead we will just provide the token
 to the class and let it handle the authentication process.
 
-Next, still inside
-
-middleware.py, add the following:
-
-middleware.py
-
-from
-
-urllib.parse
-
-import
-
-parse_qs  
-
-from
-
-channels.db
-
-import
-
-database_sync_to_async  
-
-  
-
-  
-
-@database_sync_to_async  
-
-def
-
-get_user
-
-(scope):  
-
-"""  
-
-Return the user model instance associated with the given scope.  
-
-If no user is retrieved, return an instance of \`AnonymousUser\`.  
-
-"""  
-
-\# postpone model import to avoid ImproperlyConfigured error before
-Django  
-
-\# setup is complete.  
-
-from
-
-django.contrib.auth.models
-
-import
-
-AnonymousUser  
-
-  
-
-if
-
-"token"
-
-not
-
-in
-
-scope:  
-
-raise
-
-ValueError
-
-(  
-
-"Cannot find token in scope. You should wrap your consumer in "  
-
-"TokenAuthMiddleware."  
-
-)  
-
-token
-
-=
-
-scope\[
-
-"token"
-
-\]  
-
-user
-
-=
-
-None  
-
-try
-
-:  
-
-auth
-
-=
-
-TokenAuthentication()  
-
-user
-
-=
-
-auth.authenticate(token)  
-
-except
-
-AuthenticationFailed:  
-
-pass  
-
-return
-
-user
-
-or
-
-AnonymousUser()  
-
-  
-
-  
-
-class
-
-TokenAuthMiddleware
-
-:  
-
-"""  
-
-Custom middleware that takes a token from the query string and
-authenticates via Django Rest Framework authtoken.  
-
-"""  
-
-  
-
-def
-
-\_\_init\_\_
-
-(self, app):  
-
-\# Store the ASGI application we were passed  
-
-self
-
-.app
-
-=
-
-app  
-
-  
-
-async
-
-def
-
-\_\_call\_\_
-
-(self, scope, receive, send):  
-
-\# Look up user from query string (you should also do things like  
-
-\# checking if it is a valid user ID, or if scope\["user"\] is already  
-
-\# populated).  
-
-query_params
-
-=
-
-parse_qs(scope\[
-
-"query_string"
-
-\].decode())  
-
-token
-
-=
-
-query_params\[
-
-"token"
-
-\]\[
-
-0
-
-\]  
-
-scope\[
-
-"token"
-
-\]
-
-=
-
-token  
-
-scope\[
-
-"user"
-
-\]
-
-=
-
-await
-
-get_user(scope)  
-
-return
-
-await
-
-self
-
-.app(scope, receive, send)  
-
-The first function takes in a parameter
-
-scope that is just a dictionary with the
-
-token key and value. It then calls the
-
-TokenAuthentication class'
-
-authenticate method. It returns either an anonymous user or the
-authenticated user from the response of the
-
-authenticate function. This function also has a decorator
-
-database_sync_to_async because Channels middleware is async and we need
+Next, still inside `middleware.py`, add the following:
+
+```python
+# middleware.py
+from urllib.parse import parse_qs
+from channels.db import database_sync_to_async
+
+
+@database_sync_to_async
+def get_user(scope):
+    """
+    Return the user model instance associated with the given scope.
+    If no user is retrieved, return an instance of `AnonymousUser`.
+    """
+    # postpone model import to avoid ImproperlyConfigured error before Django
+    # setup is complete.
+    from django.contrib.auth.models import AnonymousUser
+
+    if "token" not in scope:
+        raise ValueError(
+            "Cannot find token in scope. You should wrap your consumer in "
+            "TokenAuthMiddleware."
+        )
+    token = scope["token"]
+    user = None
+    try:
+        auth = TokenAuthentication()
+        user = auth.authenticate(token)
+    except AuthenticationFailed:
+        pass
+    return user or AnonymousUser()
+
+
+class TokenAuthMiddleware:
+    """
+    Custom middleware that takes a token from the query string and authenticates via Django Rest Framework authtoken.
+    """
+
+    def __init__(self, app):
+        # Store the ASGI application we were passed
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        # Look up user from query string (you should also do things like
+        # checking if it is a valid user ID, or if scope["user"] is already
+        # populated).
+        query_params = parse_qs(scope["query_string"].decode())
+        token = query_params["token"][0]
+        scope["token"] = token
+        scope["user"] = await get_user(scope)
+        return await self.app(scope, receive, send)
+```
+
+The first function takes in a parameter `scope` that is just a dictionary with the
+
+token key and value. It then calls the `TokenAuthentication` class' `authenticate` method. It returns either an anonymous user or the `authenticated user from the response of the `authenticate` function. This function also has a decorator `database_sync_to_async` because Channels middleware is async and we need
 to convert this function into an async function to work properly.
 
-Lastly, the
+Lastly, the `TokenAuthMiddleware` class is what completes the authentication. It has
+an async method `\_\_call\_\_` that takes in the parameter `scope`. Here we extract the query parameters from the scope, which includes the `?token` query parameter. Then we pass the token value into the `get_user` function which authenticates the token and sets the `user` property into the `scope`. Ultimately, this value is either the logged in user or an anonymous user object.
 
-TokenAuthMiddleware class is what completes the authentication. It has
-an async method
+Apply this middleware into `config/asgi.py` by wrapping the `URLRouter` inside the `TokenAuthMiddleware`:
 
-\_\_call\_\_ that takes in the parameter
+```python
+#config/asgi.py
+from conversa_dj.chats.middleware import TokenAuthMiddleware  # noqa isort:skip
 
-scope. Here we extract the query parameters from the scope, which
-includes the
 
-?token query parameter. Then we pass the token value into the
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": TokenAuthMiddleware(URLRouter(routing.websocket_urlpatterns)),
+    }
+)
+```
 
-get_user function which authenticates the token and sets the
+Lastly, in the consumer we can add a check inside the `connect` method to see if the user is authenticated. Here we are accessing the user from the `scope` attribute that comes from the middleware:
 
-user property into the
+```python
+def __init__(self, *args, **kwargs):
+    super().__init__(args, kwargs)
+    self.room_name = None
+    self.user = None
 
-scope. Ultimately, this value is either the logged in user or an
-anonymous user object.
 
-Apply this middleware into
+def connect(self):
+    self.user = self.scope["user"]
+    if not self.user.is_authenticated:
+        return
+    # continue with connect logic
+```
 
-config/asgi.py by wrapping the
-
-URLRouter inside the
-
-TokenAuthMiddleware:
-
-config/asgi.py
-
-from
-
-conversa_dj.chats.middleware
-
-import
-
-TokenAuthMiddleware
-
-\# noqa isort:skip  
-
-  
-
-  
-
-application
-
-=
-
-ProtocolTypeRouter(  
-
-{  
-
-"http"
-
-: get_asgi_application(),  
-
-"websocket"
-
-: TokenAuthMiddleware(URLRouter(routing.websocket_urlpatterns)),  
-
-}  
-
-)  
-
-Lastly, in the consumer we can add a check inside the
-
-connect method to see if the user is authenticated. Here we are
-accessing the user from the
-
-scope attribute that comes from the middleware:
-
-def
-
-\_\_init\_\_
-
-(self,
-
-\*
-
-args,
-
-\*\*
-
-kwargs):  
-
-super
-
-().
-
-\_\_init\_\_
-
-(args, kwargs)  
-
-self
-
-.room_name
-
-=
-
-None  
-
-self
-
-.user
-
-=
-
-None  
-
-  
-
-  
-
-def
-
-connect
-
-(self):  
-
-self
-
-.user
-
-=
-
-self
-
-.scope\[
-
-"user"
-
-\]  
-
-if
-
-not
-
-self
-
-.user.is_authenticated:  
-
-return  
-
-\# continue with connect logic  
-
-Now go and test the
-
-/chats page on the frontend and see if you can successfully connect.
+Now go and test the `/chats` page on the frontend and see if you can successfully connect.
 
 Congrats! You now have an authenticated websocket!
 
@@ -6137,465 +1691,76 @@ Right now if you refresh the page you will lose the chat history. This
 makes sense because we're not saving any of the messages in a database.
 
 What we'll do now is create models to represent the messages and
-conversations between users. In
+conversations between users. In `chats/models.py` create the models:
 
-chats/models.py create the models:
+```python
+# chats/models.py
+import uuid
 
-chats/models.py
+from django.contrib.auth import get_user_model
+from django.db import models
 
-import
+User = get_user_model()
 
-uuid  
 
-  
+class Conversation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=128)
+    online = models.ManyToManyField(to=User, blank=True)
 
-from
+    def get_online_count(self):
+        return self.online.count()
 
-django.contrib.auth
+    def join(self, user):
+        self.online.add(user)
+        self.save()
 
-import
+    def leave(self, user):
+        self.online.remove(user)
+        self.save()
 
-get_user_model  
+    def __str__(self):
+        return f"{self.name} ({self.get_online_count()})"
 
-from
 
-django.db
+class Message(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE, related_name="messages"
+    )
+    from_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="messages_from_me"
+    )
+    to_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="messages_to_me"
+    )
+    content = models.CharField(max_length=512)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
 
-import
+    def __str__(self):
+        return f"From {self.from_user.username} to {self.to_user.username}: {self.content} [{self.timestamp}]"
+```
 
-models  
-
-  
-
-User
-
-=
-
-get_user_model()  
-
-  
-
-  
-
-class
-
-Conversation
-
-(
-
-models
-
-.
-
-Model
-
-):  
-
-id
-
-=
-
-models.UUIDField(
-
-primary_key
-
-=
-
-True
-
-,
-
-default
-
-=
-
-uuid.uuid4,
-
-editable
-
-=
-
-False
-
-)  
-
-name
-
-=
-
-models.CharField(
-
-max_length
-
-=
-
-128
-
-)  
-
-online
-
-=
-
-models.ManyToManyField(
-
-to
-
-=
-
-User,
-
-blank
-
-=
-
-True
-
-)  
-
-  
-
-def
-
-get_online_count
-
-(self):  
-
-return
-
-self
-
-.online.count()  
-
-  
-
-def
-
-join
-
-(self, user):  
-
-self
-
-.online.add(user)  
-
-self
-
-.save()  
-
-  
-
-def
-
-leave
-
-(self, user):  
-
-self
-
-.online.remove(user)  
-
-self
-
-.save()  
-
-  
-
-def
-
-\_\_str\_\_
-
-(self):  
-
-return
-
-f
-
-"
-
-{self
-
-.name
-
-}
-
-(
-
-{self
-
-.get_online_count()
-
-}
-
-)"  
-
-  
-
-  
-
-class
-
-Message
-
-(
-
-models
-
-.
-
-Model
-
-):  
-
-id
-
-=
-
-models.UUIDField(
-
-primary_key
-
-=
-
-True
-
-,
-
-default
-
-=
-
-uuid.uuid4,
-
-editable
-
-=
-
-False
-
-)  
-
-conversation
-
-=
-
-models.ForeignKey(  
-
-Conversation,
-
-on_delete
-
-=
-
-models.
-
-CASCADE
-
-,
-
-related_name
-
-=
-
-"messages"  
-
-)  
-
-from_user
-
-=
-
-models.ForeignKey(  
-
-User,
-
-on_delete
-
-=
-
-models.
-
-CASCADE
-
-,
-
-related_name
-
-=
-
-"messages_from_me"  
-
-)  
-
-to_user
-
-=
-
-models.ForeignKey(  
-
-User,
-
-on_delete
-
-=
-
-models.
-
-CASCADE
-
-,
-
-related_name
-
-=
-
-"messages_to_me"  
-
-)  
-
-content
-
-=
-
-models.CharField(
-
-max_length
-
-=
-
-512
-
-)  
-
-timestamp
-
-=
-
-models.DateTimeField(
-
-auto_now_add
-
-=
-
-True
-
-)  
-
-read
-
-=
-
-models.BooleanField(
-
-default
-
-=
-
-False
-
-)  
-
-  
-
-def
-
-\_\_str\_\_
-
-(self):  
-
-return
-
-f
-
-"From
-
-{self
-
-.from_user.username
-
-}
-
-to
-
-{self
-
-.to_user.username
-
-}
-
-:
-
-{self
-
-.content
-
-}
-
-\[
-
-{self
-
-.timestamp
-
-}
-
-\]"  
-
-The
-
-Conversation model will be used to manage a conversation between two
+The `Conversation` model will be used to manage a conversation between two
 users and all the messages between the users.
 
-The
-
-Message model will store the message content, the time it was sent and
+The `Message` model will store the message content, the time it was sent and
 if it has been read or not by the receiver.
 
-Run the
+Run the `makemigrations` command and `migrate` command to apply the changes to the database.
 
-makemigrations command and
+```python
+# chats/admin.py
+Register them in `chats/admin.py`:
 
-migrate command to apply the changes to the database.
+from django.contrib import admin
+from .models import Conversation, Message
 
-chats/admin.py
 
-Register them
-
-in
-
-\`chats
-
-/
-
-admin.py\`
-
-:  
-
-  
-
-from
-
-django.contrib
-
-import
-
-admin  
-
-from
-
-.models
-
-import
-
-Conversation, Message  
-
-  
-
-  
-
-admin.site.register(Conversation)  
-
-admin.site.register(Message)  
+admin.site.register(Conversation)
+admin.site.register(Message)
+```
 
 Now that the models are setup, the first thing to do is handle creating
 a conversation, and specifically what value to put as the name of the
@@ -6604,197 +1769,52 @@ conversation.
 The name of the conversation will come from a URL kwarg value. For
 example the URL could be:
 
-path(
+```python
+path("<slug>/", ChatConsumer.as_asgi())
+```
 
-"\<slug\>/"
+And the value of the room name would be the `slug` from the URL.
 
-, ChatConsumer.as_asgi())  
-
-And the value of the room name would be the
-
-slug from the URL.
-
-More specifically, we can format names of conversations as a combination
-of the users in the conversation. If two users, john and mike are in a
-conversation, then we can call the name of the conversation
-
-john\_\_mike. That way if we wanted to fetch all of the conversations
+More specifically, we can format names of conversations as a combination of the users in the conversation. If two users, john and mike are in a
+conversation, then we can call the name of the conversation `john\_\_mike`. That way if we wanted to fetch all of the conversations
 for the user john, we could do a query like this:
 
-Conversation.objects.filter(
-
-name\_\_icontains
-
-=
-
-"john"
-
-)  
+```python
+Conversation.objects.filter(name__icontains="john")
+```
 
 With that being said, replace the
 
-\_\_init\_\_ method:
-
-def
-
-\_\_init\_\_
-
-(self,
-
-\*
-
-args,
-
-\*\*
-
-kwargs):  
-
-super
-
-().
-
-\_\_init\_\_
-
-(args, kwargs)  
-
-self
-
-.user
-
-=
-
-None  
-
-self
-
-.conversation_name
-
-=
-
-None  
-
-self
-
-.conversation
-
-=
-
-None  
-
-Replace the
-
-connect method with the following:
-
-def
-
-connect
-
-(self):  
-
-self
-
-.user
-
-=
-
-self
-
-.scope\[
-
-"user"
-
-\]  
-
-if
-
-not
-
-self
-
-.user.is_authenticated:  
-
-return  
-
-  
-
-self
-
-.accept()  
-
-self
-
-.conversation_name
-
-=
-
-f
-
-"
-
-{self
-
-.scope\[
-
-'url_route'
-
-\]\[
-
-'kwargs'
-
-\]\[
-
-'conversation_name'
-
-\]
-
-}
-
-"  
-
-self
-
-.conversation, created
-
-=
-
-Conversation.objects.get_or_create(
-
-name
-
-=
-
-self
-
-.conversation_name)  
-
-  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_add)(  
-
-self
-
-.conversation_name,  
-
-self
-
-.channel_name,  
-
-)  
+```python
+def __init__(self, *args, **kwargs):
+    super().__init__(args, kwargs)
+    self.user = None
+    self.conversation_name = None
+    self.conversation = None
+```
+
+Replace the `connect` method with the following:
+
+```python
+def connect(self):
+    self.user = self.scope["user"]
+    if not self.user.is_authenticated:
+        return
+
+    self.accept()
+    self.conversation_name = f"{self.scope['url_route']['kwargs']['conversation_name']}"
+    self.conversation, created = Conversation.objects.get_or_create(name=self.conversation_name)
+
+    async_to_sync(self.channel_layer.group_add)(
+        self.conversation_name,
+        self.channel_name,
+    )
+```
 
 Now we are creating the conversation from the kwarg value and storing it
 on the consumer.
 
-On the consumer's
-
-receive_json method change
-
-self.room_name to
-
-self.conversation_name.
+On the consumer's `receive_json` method change `self.room_name` to `self.conversation_name`.
 
 ### Creating Conversations on the Frontend
 
@@ -6802,573 +1822,68 @@ We will start by listing out all of the users to start conversations
 with. When clicking on a user it will navigate us to a chat page like we
 have been working on so far.
 
-Create a file
-
-components/Conversations.tsx:
-
-Conversations.tsx
-
-import
-
-{ useContext, useEffect, useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-{ Link }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
-
-  
-
-interface
-
-UserResponse
-
-{  
-
-username
-
-:
-
-string
-
-;  
-
-name
-
-:
-
-string
-
-;  
-
-url
-
-:
-
-string
-
-;  
-
-}  
-
-  
-
-export
-
-function
-
-Conversations
-
-() {  
-
-const
-
-{
-
-user
-
-}
-
-=
-
-useContext
-
-(AuthContext);  
-
-const
-
-\[
-
-users
-
-,
-
-setUsers
-
-\]
-
-=
-
-useState
-
-\<
-
-UserResponse
-
-\[\]\>(\[\]);  
-
-  
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-async
-
-function
-
-fetchUsers
-
-() {  
-
-const
-
-res
-
-=
-
-await
-
-fetch
-
-(
-
-"http://127.0.0.1:8000/api/users/"
-
-, {  
-
-headers: {  
-
-Authorization:
-
-\`Token ${
-
-user
-
-?.
-
-token
-
-}\`  
-
-}  
-
-});  
-
-const
-
-data
-
-=
-
-await
-
-res.
-
-json
-
-();  
-
-setUsers
-
-(data);  
-
-}  
-
-fetchUsers
-
-();  
-
-}, \[user\]);  
-
-  
-
-function
-
-createConversationName
-
-(
-
-username
-
-:
-
-string
-
-) {  
-
-const
-
-namesAlph
-
-=
-
-\[user?.username, username\].
-
-sort
-
-();  
-
-return
-
-\`${
-
-namesAlph
-
-\[
-
-0
-
-\]
-
-}\_\_${
-
-namesAlph
-
-\[
-
-1
-
-\]
-
-}\`
-
-;  
-
-}  
-
-  
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-{users  
-
-.
-
-filter
-
-((
-
-u
-
-:
-
-UserModel
-
-)
-
-=\>
-
-u.username
-
-!==
-
-user?.username)  
-
-.
-
-map
-
-((
-
-u
-
-:
-
-UserModel
-
-)
-
-=\>
-
-(  
-
-\<
-
-Link
-
-to
-
-=
-
-{
-
-\`chats/${
-
-createConversationName
-
-(
-
-u
-
-.
-
-username
-
-)
-
-}\`
-
-}\>  
-
-\<
-
-div
-
-key
-
-=
-
-{u.username}\>{u.username}\</
-
-div
-
-\>  
-
-\</
-
-Link
-
-\>  
-
-))}  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
-
-Inside
-
-App.tsx replace the first two
-
-Route elements with this:
-
-App.tsx
-
-\<
-
-Route
-
-path
-
-=
-
-""
-
-element
-
-=
-
-{\<
-
-Conversations
-
-/\>} /\>  
-
-\<
-
-Route
-
-path
-
-=
-
-"chats/:conversationName"
-
-element
-
-=
-
-{\<
-
-Chat
-
-/\>} /\>  
+Create a file `components/Conversations.tsx`:
+
+```tsx
+// Conversations.tsx
+def connect(self):
+    self.user = self.scope["user"]
+    if not self.user.is_authenticated:
+        return
+
+    self.accept()
+    self.conversation_name = f"{self.scope['url_route']['kwargs']['conversation_name']}"
+    self.conversation, created = Conversation.objects.get_or_create(name=self.conversation_name)
+
+    async_to_sync(self.channel_layer.group_add)(
+        self.conversation_name,
+        self.channel_name,
+    )
+```
+
+Inside `App.tsx` replace the first two `Route` elements with this:
+
+```tsx
+// App.tsx
+<Route path="" element={<Conversations />} />
+<Route path="chats/:conversationName" element={<Chat />} />
+```
 
 We're now using the home page to display all of the conversations.
 
 However, at this point you might have seen that our logged in user
-object only contains the
-
-token property. It does not have the username or any other details about
-the user. We will need to override the
-
-obtain_auth_token view.
-
-Inside
-
-users/api/views.py add a new view:
-
-users/api/views.py
-
-from
-
-rest_framework.authtoken.models
-
-import
-
-Token  
-
-from
-
-rest_framework.authtoken.views
-
-import
-
-ObtainAuthToken  
-
-  
-
-  
-
-class
-
-CustomObtainAuthTokenView
-
-(
-
-ObtainAuthToken
-
-):  
-
-def
-
-post
-
-(self, request,
-
-\*
-
-args,
-
-\*\*
-
-kwargs):  
-
-serializer
-
-=
-
-self
-
-.get_serializer(
-
-data
-
-=
-
-request.data)  
-
-serializer.is_valid(
-
-raise_exception
-
-=
-
-True
-
-)  
-
-user
-
-=
-
-serializer.validated_data\[
-
-"user"
-
-\]  
-
-token, created
-
-=
-
-Token.objects.get_or_create(
-
-user
-
-=
-
-user)  
-
-return
-
-Response({
-
-"token"
-
-: token.key,
-
-"username"
-
-: user.username})  
-
-Then inside
-
-config/urls.py add the import and change the
-
-auth-token/ route to use the custom view class:
-
-config/urls.py
-
-from
-
-conversa_dj.users.api.views
-
-import
-
-CustomObtainAuthTokenView  
-
-  
-
-urlpatterns
-
-+=
-
-\[  
-
-\# paths  
-
-path(
-
-"auth-token/"
-
-, CustomObtainAuthTokenView.as_view()),  
-
-\# paths  
-
-\]  
+object only contains the `token` property. It does not have the username or any other details about
+the user. We will need to override the `obtain_auth_token` view.
+
+Inside `users/api/views.py` add a new view:
+
+```python
+# users/api/views.py
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+
+
+class CustomObtainAuthTokenView(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key, "username": user.username})
+```
+
+Then inside `config/urls.py` add the import and change the `auth-token/` route to use the custom view class:
+
+```python
+# config/urls.py
+from conversa_dj.users.api.views import CustomObtainAuthTokenView
+
+urlpatterns += [
+    # paths
+    path("auth-token/", CustomObtainAuthTokenView.as_view()),
+    # paths
+]
+```
 
 To see the effects of this change you will need to logout and login
 again. Check the object saved in localstorage - you should see the
@@ -7376,260 +1891,61 @@ username in the object.
 
 To test you will need other users. Open a terminal with:
 
-python manage.py shell_plus
+`python manage.py shell_plus`
 
 This will import some models into the shell for us to work with. Run the
 following command:
 
-User.objects.create_user(
+```bash
+User.objects.create_user(email="test@test.com", username="test", password="password")
+```
 
-email
-
-=
-
-"test@test.com"
-
-,
-
-username
-
-=
-
-"test"
-
-,
-
-password
-
-=
-
-"password"
-
-)  
-
-The
-
-UserViewSet also needs a slight modification because right now it
-filters the user queryset to only be for the request user. Let's add
+The `UserViewSet` also needs a slight modification because right now it filters the user queryset to only be for the request user. Let's add
 another action so that we can specifically query all users:
 
-class
-
-UserViewSet
-
-(
-
-RetrieveModelMixin
-
-,
-
-ListModelMixin
-
-,
-
-UpdateModelMixin
-
-,
-
-GenericViewSet
-
-):  
-
-\# other viewset logic  
-
-  
-
-\# Add this  
-
-@action
-
-(
-
-detail
-
-=
-
-False
-
-)  
-
-def
-
-all
-
-(self, request):  
-
-serializer
-
-=
-
-UserSerializer(  
-
-User.objects.all(),
-
-many
-
-=
-
-True
-
-,
-
-context
-
-=
-
-{
-
-"request"
-
-: request}  
-
-)  
-
-return
-
-Response(
-
-status
-
-=
-
-status.
-
-HTTP_200_OK
-
-,
-
-data
-
-=
-
-serializer.data)  
-
-This means we can query all the users on
-
-http://127.0.0.1:8000/api/users/all/ so change the URL in
-
-Conversations.tsx to point to this URL and you should now see your test
-user showing on the home page.
-
-Clicking on the user should also redirect you to the
-
-/chats URL. However we need to fix the websocket URL so that it connects
-to the URL with the room name as a kwarg. In the
-
-routing.py file change the URL path:
-
-websocket_urlpatterns
-
-=
-
-\[  
-
-path(
-
-"\<conversation_name\>/"
-
-, ChatConsumer.as_asgi())  
-
-\]  
-
-And inside
-
-Chat.tsx we can use the
-
-useParams hook to query the URL parameters. One of those values is the
-
-conversationName which is what will be used to change the websocket URL:
-
-Chat.tsx
-
-import
-
-{ useParams }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-export
-
-function
-
-Chat
-
-() {  
-
-const
-
-{
-
-conversationName
-
+```python
+class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+    # other viewset logic
+
+    # Add this
+    @action(detail=False)
+    def all(self, request):
+        serializer = UserSerializer(
+            User.objects.all(), many=True, context={"request": request}
+        )
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
+```
+
+This means we can query all the users on `http://127.0.0.1:8000/api/users/all/` so change the URL in `Conversations.tsx` to point to this URL and you should now see your test user showing on the home page.
+
+Clicking on the user should also redirect you to the `/chats` URL. However we need to fix the websocket URL so that it connects
+to the URL with the room name as a kwarg. In the `routing.py` file change the URL path:
+
+```python
+websocket_urlpatterns = [
+  path("<conversation_name>/", ChatConsumer.as_asgi())
+]
+```
+
+And inside `Chat.tsx` we can use the `useParams` hook to query the URL parameters. One of those values is the `conversationName` which is what will be used to change the websocket URL:
+
+```tsx
+// Chat.tsx
+import { useParams } from "react-router-dom";
+
+export function Chat() {
+  const { conversationName } = useParams(); // add this
+  // rest of state
+
+  // change the websocket URL to this:
+  const { readyState, sendJsonMessage } = useWebSocket(
+    user ? `ws://127.0.0.1:8000/${conversationName}/` : null,
+    {}
+  );
+
+  // rest of logic
 }
-
-=
-
-useParams
-
-();
-
-// add this  
-
-// rest of state  
-
-  
-
-// change the websocket URL to this:  
-
-const
-
-{
-
-readyState
-
-,
-
-sendJsonMessage
-
-}
-
-=
-
-useWebSocket
-
-(  
-
-user
-
-?
-
-\`ws://127.0.0.1:8000/${
-
-conversationName
-
-}/\`
-
-:
-
-null
-
-,  
-
-{}  
-
-);  
-
-  
-
-// rest of logic  
-
-}  
+```
 
 You should now see that the websocket connects when navigating to the
 new chat! Now we are able to start new conversations.
@@ -7649,600 +1965,164 @@ There are two parts to this:
 
 ### Saving Messages
 
-In the
+In the `receive_json` method of the consumer, we are going to save a Message
+model when receiving the event type `chat_message`:
 
-receive_json method of the consumer, we are going to save a Message
-model when receiving the event type
+```python
+if message_type == "chat_message":
+    message = Message.objects.create(
+        from_user=self.user,
+        to_user=self.get_receiver(),
+        content=content["message"],
+        conversation=self.conversation
+    )
+```
 
-chat_message:
-
-if
-
-message_type
-
-==
-
-"chat_message"
-
-:  
-
-message
-
-=
-
-Message.objects.create(  
-
-from_user
-
-=
-
-self
-
-.user,  
-
-to_user
-
-=
-
-self
-
-.get_receiver(),  
-
-content
-
-=
-
-content\[
-
-"message"
-
-\],  
-
-conversation
-
-=
-
-self
-
-.conversation  
-
-)  
-
-The
-
-to_user field is calling a function that needs to be added to the
+The `to_user` field is calling a function that needs to be added to the
 consumer:
 
-def
-
-get_receiver
-
-(self):  
-
-usernames
-
-=
-
-self
-
-.conversation_name.split(
-
-"\_\_"
-
-)  
-
-for
-
-username
-
-in
-
-usernames:  
-
-if
-
-username
-
-!=
-
-self
-
-.user.username:  
-
-\# This is the receiver  
-
-return
-
-User.objects.get(
-
-username
-
-=
-
-username)  
+```python
+def get_receiver(self):
+    usernames = self.conversation_name.split("__")
+    for username in usernames:
+        if username != self.user.username:
+            # This is the receiver
+            return User.objects.get(username=username)
+```
 
 This function takes the name of the current conversation and determines
 the recipient username based on the authenticated user sending the
 message.
 
-The message being sent is no longer just a string. It is a
-
-Message model instance that contains other data such as the time it was
+The message being sent is no longer just a string. It is a `Message` model instance that contains other data such as the time it was
 sent, who sent it and whether it has been read or not. Ideally we'd like
 to pass in all of this information into the JSON message but because
 we're working with a model now, we will need help serialising the data.
 
-We'll create a folder called
-
-api inside the
-
-chats app. Inside
-
-api create a file
-
-serializers.py and add the following:
-
-from
-
-rest_framework
-
-import
-
-serializers  
-
-  
-
-from
-
-conversa_dj.chats.models
-
-import
-
-Message  
-
-from
-
-conversa_dj.users.api.serializers
-
-import
-
-UserSerializer  
-
-  
-
-  
-
-class
-
-MessageSerializer
-
-(
-
-serializers
-
-.
-
-ModelSerializer
-
-):  
-
-from_user
-
-=
-
-serializers.SerializerMethodField()  
-
-to_user
-
-=
-
-serializers.SerializerMethodField()  
-
-conversation
-
-=
-
-serializers.SerializerMethodField()  
-
-  
-
-class
-
-Meta
-
-:  
-
-model
-
-=
-
-Message  
-
-fields
-
-=
-
-(  
-
-"id"
-
-,  
-
-"conversation"
-
-,  
-
-"from_user"
-
-,  
-
-"to_user"
-
-,  
-
-"content"
-
-,  
-
-"timestamp"
-
-,  
-
-"read"
-
-,  
-
-)  
-
-  
-
-def
-
-get_conversation
-
-(self, obj):  
-
-return
-
-str
-
-(obj.conversation.id)  
-
-  
-
-def
-
-get_from_user
-
-(self, obj):  
-
-return
-
-UserSerializer(obj.from_user).data  
-
-  
-
-def
-
-get_to_user
-
-(self, obj):  
-
-return
-
-UserSerializer(obj.to_user).data  
-
-Import the
-
-MessageSerializer:
-
-from
-
-conversa_dj.chats.api.serializers
-
-import
-
-MessageSerializer  
-
-We can now serialize the
-
-Message model instance and send it in the websocket message:
-
-\# Create the message with Message.objects.create...  
-
-  
-
-\# send message  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.conversation_name,  
-
-{  
-
-"type"
-
-:
-
-"chat_message_echo"
-
-,  
-
-"name"
-
-:
-
-self
-
-.user.username,  
-
-"message"
-
-: MessageSerializer(message).data,  
-
-},  
-
-)  
+We'll create a folder called `api` inside the `chats` app. Inside `api` create a file `serializers.py` and add the following:
+
+```python
+from rest_framework import serializers
+
+from conversa_dj.chats.models import Message
+from conversa_dj.users.api.serializers import UserSerializer
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    from_user = serializers.SerializerMethodField()
+    to_user = serializers.SerializerMethodField()
+    conversation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Message
+        fields = (
+            "id",
+            "conversation",
+            "from_user",
+            "to_user",
+            "content",
+            "timestamp",
+            "read",
+        )
+
+    def get_conversation(self, obj):
+        return str(obj.conversation.id)
+
+    def get_from_user(self, obj):
+        return UserSerializer(obj.from_user).data
+
+    def get_to_user(self, obj):
+        return UserSerializer(obj.to_user).data
+```
+
+Import the `MessageSerializer`:
+
+```python
+from conversa_dj.chats.api.serializers import MessageSerializer
+```
+
+We can now serialize the `Message` model instance and send it in the websocket message:
+
+```python
+# Create the message with Message.objects.create...
+
+# send message
+async_to_sync(self.channel_layer.group_send)(
+    self.conversation_name,
+    {
+        "type": "chat_message_echo",
+        "name": self.user.username,
+        "message": MessageSerializer(message).data,
+    },
+)
+```
 
 Unfortunately serializing UUID fields and Date objects is not so simple.
-The
+The `JsonWebsocketConsumer` provides the method `encode_json` which can be used to customise the `json` encoding.
 
-JsonWebsocketConsumer provides the method
+First add this class above the `ChatConsumer`:
 
-encode_json which can be used to customise the
+```python
+import json
+from uuid import UUID
 
-json encoding.
 
-First add this class above the
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return obj.hex
+        return json.JSONEncoder.default(self, obj)
+```
 
-ChatConsumer:
+Then add this method to the `ChatConsumer`:
 
-import
-
-json  
-
-from
-
-uuid
-
-import
-
-UUID  
-
-  
-
-  
-
-class
-
-UUIDEncoder
-
-(
-
-json
-
-.
-
-JSONEncoder
-
-):  
-
-def
-
-default
-
-(self, obj):  
-
-if
-
-isinstance
-
-(obj,
-
-UUID
-
-):  
-
-\# if the obj is uuid, we simply return the value of uuid  
-
-return
-
-obj.hex  
-
-return
-
-json.JSONEncoder.default(
-
-self
-
-, obj)  
-
-Then add this method to the
-
-ChatConsumer:
-
-consumers.py
-
-@
-
-classmethod  
-
-def
-
-encode_json
-
-(cls, content):  
-
-return
-
-json.dumps(content,
-
-cls
-
-=
-
-UUIDEncoder)  
+```python
+# consumers.py
+@classmethod
+def encode_json(cls, content):
+    return json.dumps(content, cls=UUIDEncoder)
+```
 
 Now all the messages will include a serialized UUID field.
 
 ------------------------------------------------------------------------
 
-We also need to change the
-
-UserSerializer and remove the
-
-extra_kwargs as well as the
-
-url field. This is because it creates a hyperlink which requires the
-
-request object. However, since we're working with websockets there is no
+We also need to change the `UserSerializer` and remove the `extra_kwargs` as well as the `url` field. This is because it creates a hyperlink which requires the `request` object. However, since we're working with websockets there is no
 request object. So for now it is easier to simply remove it:
 
-conversa_dj/users/api/serializers.py
-
-class
-
-UserSerializer
-
-(
-
-serializers
-
-.
-
-ModelSerializer
-
-):  
-
-class
-
-Meta
-
-:  
-
-model
-
-=
-
-User  
-
-fields
-
-=
-
-\[
-
-"username"
-
-,
-
-"name"
-
-\]  
+```python
+#conversa_dj/users/api/serializers.py
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username", "name"]
+```
 
 Lastly we need to make some changes to the frontend to account for the
-new data structure being sent. In
+new data structure being sent. In `Chat.tsx` replace the rendered out message history:
 
-Chat.tsx replace the rendered out message history:
+```python
+# Chat.tsx
+{
+  messageHistory.map((message: any, idx: number) => (
+    <div className="border border-gray-200 py-3 px-3" key={idx}>
+      {message.from_user.username}: {message.content}
+    </div>
+  ));
+}
+```
 
-Chat.tsx
 
-{  
 
-messageHistory.
+In the `onMessage` handler change the `chat_message_echo` to set the message history state like this:
 
-map
-
-((
-
-message
-
-:
-
-any
-
-,
-
-idx
-
-:
-
-number
-
-)
-
-=\>
-
-(  
-
-\<
-
-div
-
-className
-
-=
-
-"border border-gray-200 py-3 px-3"
-
-key
-
-=
-
-{idx}\>  
-
-{message.from_user.username}: {message.content}  
-
-\</
-
-div
-
-\>  
-
-));  
-
-}  
-
-In the
-
-onMessage handler change the
-
-chat_message_echo to set the message history state like this:
-
-setMessageHistory
-
-((
-
-prev
-
-:
-
-any
-
-)
-
-=\>
-
-prev.
-
-concat
-
-(data.message));  
+```tsx
+setMessageHistory((prev: any) => prev.concat(data.message));
+```  
 
 We also no longer need the user to fill in the form for their name so
-you can remove the
-
-name state, the
-
-handleChangeName function and the
-
-\<input /\> tag.
+you can remove the `name` state, the `handleChangeName` function and the `\<input /\>` tag.
 
 Go ahead and test the form to send a message. You should see messages
 displaying! Check the Django admin and you will see all the
@@ -8254,430 +2134,75 @@ Message's have been saved as well.
 When a user connects to the conversation we are going to send them the
 last 50 messages and have them displayed automatically.
 
-In the consumer, at the end of the
-
-connect method add the following:
-
-messages
-
-=
-
-self.conversation.messages.
-
-all
-
-().
-
-order_by
-
-(
-
-"-timestamp"
-
-)\[
-
-0
-
-:
-
-50
-
-\]  
-
-self.
-
-send_json
-
-({  
-
-"type"
-
-:
-
-"last_50_messages"
-
-,  
-
-"messages"
-
-:
-
-MessageSerializer
-
-(messages, many
-
-=
-
-True).data,  
-
-})  
-
-In
-
-Chat.tsx we now need to add another
-
-case to the
-
-onMessage handler:
-
-case
-
-"last_50_messages"
-
-:  
-
-setMessageHistory
-
-(data.messages);  
-
-break
-
-;  
-
-One last improvement we can make on this is the display of the messages.
-Create a component in a new file
-
-Message.tsx:
-
-Message.tsx
-
-import
-
-{ useContext }
-
-from
-
-"react"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
-
-import
-
-{ MessageModel }
-
-from
-
-"../models/Message"
-
-;  
-
-  
-
-export
-
-function
-
-classNames
-
-(
-
-...
-
-classes
-
-:
-
-any
-
-) {  
-
-return
-
-classes.
-
-filter
-
-(Boolean).
-
-join
-
-(
-
-" "
-
-);  
-
-}  
-
-  
-
-export
-
-function
-
-Message
-
-({
-
-message
-
+In the consumer, at the end of the `connect` method add the following:
+
+```python
+messages = self.conversation.messages.all().order_by("-timestamp")[0:50]
+self.send_json({
+    "type": "last_50_messages",
+    "messages": MessageSerializer(messages, many=True).data,
+})
+```
+
+In `Chat.tsx` we now need to add another `case` to the `onMessage` handler:
+
+```tsx
+case "last_50_messages":
+  setMessageHistory(data.messages);
+  break;
+```
+
+One last improvement we can make on this is the display of the messages. Create a component in a new file `Message.tsx`:
+
+```tsx
+// Message.tsx
+import { useContext } from "react";
+
+import { AuthContext } from "../contexts/AuthContext";
+import { MessageModel } from "../models/Message";
+
+export function classNames(...classes: any) {
+  return classes.filter(Boolean).join(" ");
 }
 
-:
+export function Message({ message }: { message: MessageModel }) {
+  const { user } = useContext(AuthContext);
 
-{
+  function formatMessageTimestamp(timestamp: string) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString().slice(0, 5);
+  }
 
-message
-
-:
-
-MessageModel
-
-}) {  
-
-const
-
-{
-
-user
-
+  return (
+    <li
+      className={classNames(
+        "mt-1 mb-1 flex",
+        user!.username === message.to_user.username ? "justify-start" : "justify-end"
+      )}
+    >
+      <div
+        className={classNames(
+          "relative max-w-xl rounded-lg px-2 py-1 text-gray-700 shadow",
+          user!.username === message.to_user.username ? "" : "bg-gray-100"
+        )}
+      >
+        <div className="flex items-end">
+          <span className="block">{message.content}</span>
+          <span
+            className="ml-2"
+            style={{
+              fontSize: "0.6rem",
+              lineHeight: "1rem"
+            }}
+          >
+            {formatMessageTimestamp(message.timestamp)}
+          </span>
+        </div>
+      </div>
+    </li>
+  );
 }
-
-=
-
-useContext
-
-(AuthContext);  
-
-  
-
-function
-
-formatMessageTimestamp
-
-(
-
-timestamp
-
-:
-
-string
-
-) {  
-
-const
-
-date
-
-=
-
-new
-
-Date
-
-(timestamp);  
-
-return
-
-date.
-
-toLocaleTimeString
-
-().
-
-slice
-
-(
-
-0
-
-,
-
-5
-
-);  
-
-}  
-
-  
-
-return
-
-(  
-
-\<
-
-li  
-
-className
-
-=
-
-{
-
-classNames
-
-(  
-
-"mt-1 mb-1 flex"
-
-,  
-
-user
-
-!
-
-.username
-
-===
-
-message.to_user.username
-
-?
-
-"justify-start"
-
-:
-
-"justify-end"  
-
-)}  
-
-\>  
-
-\<
-
-div  
-
-className
-
-=
-
-{
-
-classNames
-
-(  
-
-"relative max-w-xl rounded-lg px-2 py-1 text-gray-700 shadow"
-
-,  
-
-user
-
-!
-
-.username
-
-===
-
-message.to_user.username
-
-?
-
-""
-
-:
-
-"bg-gray-100"  
-
-)}  
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"flex items-end"
-
-\>  
-
-\<
-
-span
-
-className
-
-=
-
-"block"
-
-\>{message.content}\</
-
-span
-
-\>  
-
-\<
-
-span  
-
-className
-
-=
-
-"ml-2"  
-
-style
-
-=
-
-{{  
-
-fontSize:
-
-"0.6rem"
-
-,  
-
-lineHeight:
-
-"1rem"  
-
-}}  
-
-\>  
-
-{
-
-formatMessageTimestamp
-
-(message.timestamp)}  
-
-\</
-
-span
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-li
-
-\>  
-
-);  
-
-}  
+```
 
 This adds some styling to the component and displays the time when the
 message was sent. But most importantly it makes the background colour
@@ -8686,180 +2211,40 @@ messages on the left of the screen and the sent messages on the side of
 the screen. This gives it a feel like most of the chat apps we use
 today.
 
-Inside
-
-models create a new file
-
-Message.ts and add the following:
-
-Message.ts
-
-import
-
-{ UserModel }
-
-from
-
-"./User"
-
-;  
-
-  
-
-export
-
-interface
-
-MessageModel
-
-{  
-
-id
-
-:
-
-string
-
-;  
-
-room
-
-:
-
-string
-
-;  
-
-from_user
-
-:
-
-UserModel
-
-;  
-
-to_user
-
-:
-
-UserModel
-
-;  
-
-content
-
-:
-
-string
-
-;  
-
-timestamp
-
-:
-
-string
-
-;  
-
-read
-
-:
-
-boolean
-
-;  
-
-}  
-
-In
-
-Chat.tsx import the new
-
-Message component and
-
-MessageModel type:
-
-Chat.tsx
-
-import
-
-{ MessageModel }
-
-from
-
-"../models/Message"
-
-;  
-
-import
-
-{ Message }
-
-from
-
-"./Message"
-
-;  
-
-Then render out the message history using the
-
-Message component:
-
-\<
-
-ul
-
-className
-
-=
-
-"mt-3 flex flex-col-reverse relative w-full border border-gray-200
-overflow-y-auto p-6"
-
-\>  
-
-{messageHistory.
-
-map
-
-((
-
-message
-
-:
-
-MessageModel
-
-)
-
-=\>
-
-(  
-
-\<
-
-Message
-
-key
-
-=
-
-{message.id}
-
-message
-
-=
-
-{message} /\>  
-
-))}  
-
-\</
-
-ul
-
-\>  
+Inside `models` create a new file `Message.ts` and add the following:
+
+```tsx
+// Message.ts
+import { UserModel } from "./User";
+
+export interface MessageModel {
+  id: string;
+  room: string;
+  from_user: UserModel;
+  to_user: UserModel;
+  content: string;
+  timestamp: string;
+  read: boolean;
+}
+```
+
+In `Chat.tsx` import the new `Message` component and `MessageModel` type:
+
+```tsx
+// Chat.tsx
+import { MessageModel } from "../models/Message";
+import { Message } from "./Message";
+```
+
+Then render out the message history using the `Message` component:
+
+```tsx
+<ul className="mt-3 flex flex-col-reverse relative w-full border border-gray-200 overflow-y-auto p-6">
+  {messageHistory.map((message: MessageModel) => (
+    <Message key={message.id} message={message} />
+  ))}
+</ul>
+```
 
 With all of this done you should now be able to see a chat app coming
 together. Here is a screenshot of the work we've done so far: ![Chat
@@ -8876,1068 +2261,202 @@ Since we can create conversations, it would be helpful if we could see
 all of the active conversations - essentially the conversations with
 messages in them.
 
-To do this we're going to create a new
-
-viewset to work with the
-
-Conversation model. In
-
-chats/api start by adding a
-
-ConversationSerializer to
-
-serializers.py:
-
-chats/api/serializers.py
-
-from
-
-django.contrib.auth
-
-import
-
-get_user_model  
-
-from
-
-conversa_dj.chats.models
-
-import
-
-Conversation  
-
-  
-
-  
-
-User
-
-=
-
-get_user_model()  
-
-  
-
-  
-
-class
-
-ConversationSerializer
-
-(
-
-serializers
-
-.
-
-ModelSerializer
-
-):  
-
-other_user
-
-=
-
-serializers.SerializerMethodField()  
-
-last_message
-
-=
-
-serializers.SerializerMethodField()  
-
-  
-
-class
-
-Meta
-
-:  
-
-model
-
-=
-
-Conversation  
-
-fields
-
-=
-
-(
-
-"id"
-
-,
-
-"name"
-
-,
-
-"other_user"
-
-,
-
-"last_message"
-
-)  
-
-  
-
-def
-
-get_last_message
-
-(self, obj):  
-
-messages
-
-=
-
-obj.messages.all().order_by(
-
-"-timestamp"
-
-)  
-
-if
-
-not
-
-messages.exists():  
-
-return
-
-None  
-
-message
-
-=
-
-messages\[
-
-0
-
-\]  
-
-return
-
-MessageSerializer(message).data  
-
-  
-
-def
-
-get_other_user
-
-(self, obj):  
-
-usernames
-
-=
-
-obj.name.split(
-
-"\_\_"
-
-)  
-
-context
-
-=
-
-{}  
-
-for
-
-username
-
-in
-
-usernames:  
-
-if
-
-username
-
-!=
-
-self
-
-.context\[
-
-"user"
-
-\].username:  
-
-\# This is the other participant  
-
-other_user
-
-=
-
-User.objects.get(
-
-username
-
-=
-
-username)  
-
-return
-
-UserSerializer(other_user,
-
-context
-
-=
-
-context).data  
-
-The
-
-ConversationSerializer provides two important things; the last messages
-sent in the conversation. This is using the
-
-obj.messages.all() query and ordering by
-
--timestamp so that it is ordered by most recent. We then serialize the
-message using the
-
-MessageSerializer which also helps keep our data types consistent on the
+To do this we're going to create a new `viewset` to work with the `Conversation` model. In `chats/api` start by adding a `ConversationSerializer` to `serializers.py`:
+
+```python
+# chats/api/serializers.py
+from django.contrib.auth import get_user_model
+from conversa_dj.chats.models import Conversation
+
+
+User = get_user_model()
+
+
+class ConversationSerializer(serializers.ModelSerializer):
+    other_user = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = ("id", "name", "other_user", "last_message")
+
+    def get_last_message(self, obj):
+        messages = obj.messages.all().order_by("-timestamp")
+        if not messages.exists():
+            return None
+        message = messages[0]
+        return MessageSerializer(message).data
+
+    def get_other_user(self, obj):
+        usernames = obj.name.split("__")
+        context = {}
+        for username in usernames:
+            if username != self.context["user"].username:
+                # This is the other participant
+                other_user = User.objects.get(username=username)
+                return UserSerializer(other_user, context=context).data
+```
+
+The `ConversationSerializer` provides two important things; the last messages
+sent in the conversation. This is using the `obj.messages.all()` query and ordering by `-timestamp` so that it is ordered by most recent. We then serialize the
+message using the `MessageSerializer` which also helps keep our data types consistent on the
 frontend with TypeScript. The other data is the "other user" participant
-in the conversation. The
-
-get_other_user method returns a serialized user object of the other
+in the conversation. The `get_other_user` method returns a serialized user object of the other
 participant.
 
-Then create
+Then create `views.py` and add the following:
 
-views.py and add the following:
+```python
+# chats/api/views.py
+from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.viewsets import GenericViewSet
 
-chats/api/views.py
+from conversa_dj.chats.models import Conversation
 
-from
+from .serializers import ConversationSerializer
 
-rest_framework.generics
 
-import
+class ConversationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
+    serializer_class = ConversationSerializer
+    queryset = Conversation.objects.none()
+    lookup_field = "name"
 
-get_object_or_404  
+    def get_queryset(self):
+        queryset = Conversation.objects.filter(
+            name__contains=self.request.user.username
+        )
+        return queryset
 
-from
-
-rest_framework.mixins
-
-import
-
-ListModelMixin, RetrieveModelMixin  
-
-from
-
-rest_framework.viewsets
-
-import
-
-GenericViewSet  
-
-  
-
-from
-
-conversa_dj.chats.models
-
-import
-
-Conversation  
-
-  
-
-from
-
-.serializers
-
-import
-
-ConversationSerializer  
-
-  
-
-  
-
-class
-
-ConversationViewSet
-
-(
-
-ListModelMixin
-
-,
-
-RetrieveModelMixin
-
-,
-
-GenericViewSet
-
-):  
-
-serializer_class
-
-=
-
-ConversationSerializer  
-
-queryset
-
-=
-
-Conversation.objects.none()  
-
-lookup_field
-
-=
-
-"name"  
-
-  
-
-def
-
-get_queryset
-
-(self):  
-
-queryset
-
-=
-
-Conversation.objects.filter(  
-
-name\_\_contains
-
-=
-
-self
-
-.request.user.username  
-
-)  
-
-return
-
-queryset  
-
-  
-
-def
-
-get_serializer_context
-
-(self):  
-
-return
-
-{
-
-"request"
-
-:
-
-self
-
-.request,
-
-"user"
-
-:
-
-self
-
-.request.user}  
+    def get_serializer_context(self):
+        return {"request": self.request, "user": self.request.user}
+```
 
 Viewsets can be daunting if you don't have much experience working with
 the Django Rest Framework. Viewsets help abstract the process of
-creating API endpoints. This viewset specifically adds a
-
-list action and
-
-retrieve action so that we can fetch all conversations as well as fetch
+creating API endpoints. This viewset specifically adds a `list` action and `retrieve` action so that we can fetch all conversations as well as fetch
 a specific conversation.
 
-Bring the viewset into
-
-config/api_router.py:
-
-config/api_router.py
-
-from
-
-conversa_dj.chats.api.views
-
-import
-
-ConversationViewSet  
-
-  
-
-router.register(
-
-"conversations"
-
-, ConversationViewSet)  
-
-On the frontend create a new file inside
-
-models called
-
-Conversation.ts:
-
-Conversation.ts
-
-import
-
-{ MessageModel }
-
-from
-
-"./Message"
-
-;  
-
-import
-
-{ UserModel }
-
-from
-
-"./User"
-
-;  
-
-  
-
-export
-
-interface
-
-ConversationModel
-
-{  
-
-id
-
-:
-
-string
-
-;  
-
-name
-
-:
-
-string
-
-;  
-
-last_message
-
-:
-
-MessageModel
-
-\|
-
-null
-
-;  
-
-other_user
-
-:
-
-UserModel
-
-;  
-
-}  
-
-Then create a new component
-
-ActiveConversations.tsx:
-
-ActiveConversations.tsx
-
-import
-
-{ useContext, useEffect, useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-{ Link }
-
-from
-
-"react-router-dom"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"../contexts/AuthContext"
-
-;  
-
-import
-
-{ ConversationModel }
-
-from
-
-"../models/Conversation"
-
-;  
-
-  
-
-export
-
-function
-
-ActiveConversations
-
-() {  
-
-const
-
-{
-
-user
-
+Bring the viewset into `config/api_router.py`:
+
+```python
+# config/api_router.py
+from conversa_dj.chats.api.views import ConversationViewSet
+
+router.register("conversations", ConversationViewSet)
+```
+
+On the frontend create a new file inside `models` called `Conversation.ts`:
+
+```ts
+// Conversation.ts
+import { MessageModel } from "./Message";
+import { UserModel } from "./User";
+
+export interface ConversationModel {
+  id: string;
+  name: string;
+  last_message: MessageModel | null;
+  other_user: UserModel;
 }
-
-=
-
-useContext
-
-(AuthContext);  
-
-const
-
-\[
-
-conversations
-
-,
-
-setActiveConversations
-
-\]
-
-=
-
-useState
-
-\<
-
-ConversationModel
-
-\[\]\>(\[\]);  
-
-  
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-async
-
-function
-
-fetchUsers
-
-() {  
-
-const
-
-res
-
-=
-
-await
-
-fetch
-
-(
-
-"http://127.0.0.1:8000/api/conversations/"
-
-, {  
-
-headers: {  
-
-Authorization:
-
-\`Token ${
-
-user
-
-?.
-
-token
-
-}\`  
-
-}  
-
-});  
-
-const
-
-data
-
-=
-
-await
-
-res.
-
-json
-
-();  
-
-setActiveConversations
-
-(data);  
-
-}  
-
-fetchUsers
-
-();  
-
-}, \[user\]);  
-
-  
-
-function
-
-createConversationName
-
-(
-
-username
-
-:
-
-string
-
-) {  
-
-const
-
-namesAlph
-
-=
-
-\[user?.username, username\].
-
-sort
-
-();  
-
-return
-
-\`${
-
-namesAlph
-
-\[
-
-0
-
-\]
-
-}\_\_${
-
-namesAlph
-
-\[
-
-1
-
-\]
-
-}\`
-
-;  
-
-}  
-
-  
-
-function
-
-formatMessageTimestamp
-
-(
-
-timestamp
-
-?:
-
-string
-
-) {  
-
-if
-
-(
-
-!
-
-timestamp)
-
-return
-
-;  
-
-const
-
-date
-
-=
-
-new
-
-Date
-
-(timestamp);  
-
-return
-
-date.
-
-toLocaleTimeString
-
-().
-
-slice
-
-(
-
-0
-
-,
-
-5
-
-);  
-
-}  
-
-  
-
-return
-
-(  
-
-\<
-
-div
-
-\>  
-
-{conversations.
-
-map
-
-((
-
-c
-
-)
-
-=\>
-
-(  
-
-\<
-
-Link  
-
-to
-
-=
-
-{
-
-\`/chats/${
-
-createConversationName
-
-(
-
-c
-
-.
-
-other_user
-
-.
-
-username
-
-)
-
-}\`
-
-}  
-
-key
-
-=
-
-{c.other_user.username}  
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"border border-gray-200 w-full p-3"
-
-\>  
-
-\<
-
-h3
-
-className
-
-=
-
-"text-xl font-semibold text-gray-800"
-
-\>{c.other_user.username}\</
-
-h3
-
-\>  
-
-\<
-
-div
-
-className
-
-=
-
-"flex justify-between"
-
-\>  
-
-\<
-
-p
-
-className
-
-=
-
-"text-gray-700"
-
-\>{c.last_message?.content}\</
-
-p
-
-\>  
-
-\<
-
-p
-
-className
-
-=
-
-"text-gray-700"
-
-\>{
-
-formatMessageTimestamp
-
-(c.last_message?.timestamp)}\</
-
-p
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-Link
-
-\>  
-
-))}  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
-
-In
-
-Navbar.tsx add a link to the page where we will display this component:
-
-Navbar.tsx
-
-\<
-
-li
-
-\>  
-
-\<
-
-Link  
-
-to
-
-=
-
-"/conversations"  
-
-className
-
-=
-
-"block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"  
-
-aria-current
-
-=
-
-"page"  
-
-\>  
-
-Active Conversations  
-
-\</
-
-Link
-
-\>  
-
-\</
-
-li
-
-\>  
-
-Inside
-
-App.tsx:
-
-App.tsx
-
-import
-
-{ ActiveConversations }
-
-from
-
-"./components/ActiveConversations"
-
-;  
-
-And then create a new protected
-
-Route:
-
-\<
-
-Route  
-
-path
-
-=
-
-"conversations/"  
-
-element
-
-=
-
-{  
-
-\<
-
-ProtectedRoute
-
-\>  
-
-\<
-
-ActiveConversations
-
-/\>  
-
-\</
-
-ProtectedRoute
-
-\>  
-
-}  
-
-/\>  
+```
+
+Then create a new component `ActiveConversations.tsx`:
+
+```tsx
+// ActiveConversations.tsx
+import { useContext, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { AuthContext } from "../contexts/AuthContext";
+import { ConversationModel } from "../models/Conversation";
+
+export function ActiveConversations() {
+  const { user } = useContext(AuthContext);
+  const [conversations, setActiveConversations] = useState<ConversationModel[]>([]);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      const res = await fetch("http://127.0.0.1:8000/api/conversations/", {
+        headers: {
+          Authorization: `Token ${user?.token}`
+        }
+      });
+      const data = await res.json();
+      setActiveConversations(data);
+    }
+    fetchUsers();
+  }, [user]);
+
+  function createConversationName(username: string) {
+    const namesAlph = [user?.username, username].sort();
+    return `${namesAlph[0]}__${namesAlph[1]}`;
+  }
+
+  function formatMessageTimestamp(timestamp?: string) {
+    if (!timestamp) return;
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString().slice(0, 5);
+  }
+
+  return (
+    <div>
+      {conversations.map((c) => (
+        <Link
+          to={`/chats/${createConversationName(c.other_user.username)}`}
+          key={c.other_user.username}
+        >
+          <div className="border border-gray-200 w-full p-3">
+            <h3 className="text-xl font-semibold text-gray-800">{c.other_user.username}</h3>
+            <div className="flex justify-between">
+              <p className="text-gray-700">{c.last_message?.content}</p>
+              <p className="text-gray-700">{formatMessageTimestamp(c.last_message?.timestamp)}</p>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+```
+
+In `Navbar.tsx` add a link to the page where we will display this component:
+
+```tsx
+// Navbar.tsx
+<li>
+  <Link
+    to="/conversations"
+    className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
+    aria-current="page"
+  >
+    Active Conversations
+  </Link>
+</li>
+```
+
+Inside `App.tsx`:
+
+```tsx
+// App.tsx
+import { ActiveConversations } from "./components/ActiveConversations";
+```
+
+And then create a new protected `Route`:
+
+```tsx
+<Route
+  path="conversations/"
+  element={
+    <ProtectedRoute>
+      <ActiveConversations />
+    </ProtectedRoute>
+  }
+/>
+```
 
 Now start a conversation with a new user and you will see the
-conversation display in the
-
-/conversations page!
+conversation display in the `/conversations` page!
 
 ## Reverse Scrolling to Load Messages
 
@@ -9953,921 +2472,208 @@ feel more like typical chat apps.
 
 Install the package:
 
-npm
-
-i
-
-react-infinite-scroll-component  
-
-Inside
-
-Chat.tsx import the component:
-
-Chat.tsx
-
-import
-
-InfiniteScroll
-
-from
-
-"react-infinite-scroll-component"
-
-;  
-
-  
-
-import
-
-{ ChatLoader }
-
-from
-
-"./ChatLoader"
-
-;  
-
-Replace the
-
-messageHistory.map() rendering with the following:
-
-Chat.tsx
-
-\<
-
-div  
-
-id
-
-=
-
-"scrollableDiv"  
-
-className
-
-=
-
-"h-\[20rem\] mt-3 flex flex-col-reverse relative w-full border
-border-gray-200 overflow-y-auto p-6"  
-
-\>  
-
-\<
-
-div
-
-\>  
-
-{
-
-/\* Put the scroll bar always on the bottom \*/
-
-}  
-
-\<
-
-InfiniteScroll  
-
-dataLength
-
-=
-
-{messageHistory.
-
-length
-
-}  
-
-next
-
-=
-
-{fetchMessages}  
-
-className
-
-=
-
-"flex flex-col-reverse"
-
-// To put endMessage and loader to the top  
-
-inverse
-
-=
-
-{
-
-true
-
-}  
-
-hasMore
-
-=
-
-{hasMoreMessages}  
-
-loader
-
-=
-
-{\<
-
-ChatLoader
-
-/\>}  
-
-scrollableTarget
-
-=
-
-"scrollableDiv"  
-
-\>  
-
-{messageHistory.
-
-map
-
-((
-
-message
-
-:
-
-MessageModel
-
-)
-
-=\>
-
-(  
-
-\<
-
-Message
-
-key
-
-=
-
-{message.id}
-
-message
-
-=
-
-{message} /\>  
-
-))}  
-
-\</
-
-InfiniteScroll
-
-\>  
-
-\</
-
-div
-
-\>  
-
-\</
-
-div
-
-\>  
-
-Create a new component
-
-ChatLoader.tsx and add the following:
-
-ChatLoader.tsx
-
-export
-
-function
-
-ChatLoader
-
-() {  
-
-return
-
-(  
-
-\<
-
-div
-
-className
-
-=
-
-"text-center"
-
-\>  
-
-\<
-
-svg  
-
-role
-
-=
-
-"status"  
-
-className
-
-=
-
-"mr-2 inline h-8 w-8 animate-spin fill-blue-600 text-gray-200
-dark:text-gray-600"  
-
-viewBox
-
-=
-
-"0 0 100 101"  
-
-fill
-
-=
-
-"none"  
-
-xmlns
-
-=
-
-"http://www.w3.org/2000/svg"  
-
-\>  
-
-\<
-
-path  
-
-d
-
-=
-
-"M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0
-78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082
-100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094
-50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186
-27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921
-9.08144 50.5908Z"  
-
-fill
-
-=
-
-"currentColor"  
-
-/\>  
-
-\<
-
-path  
-
-d
-
-=
-
-"M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932
-28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238
-75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666
-0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778
-38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511
-9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457
-70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175
-28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781
-93.9676 39.0409Z"  
-
-fill
-
-=
-
-"currentFill"  
-
-/\>  
-
-\</
-
-svg
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
-
-On the
-
-Chat component add some state:
-
-Chat.tsx
-
-const
-
-\[
-
-page
-
-,
-
-setPage
-
-\]
-
-=
-
-useState
-
-(
-
-2
-
-);  
-
-const
-
-\[
-
-hasMoreMessages
-
-,
-
-setHasMoreMessages
-
-\]
-
-=
-
-useState
-
-(
-
-false
-
-);  
-
-This state is required for the
-
-InfiniteScroll component. Basically it helps to tell the component when
+```bash
+npm i react-infinite-scroll-component
+```
+
+Inside `Chat.tsx` import the component:
+
+```tsx
+// Chat.tsx
+import InfiniteScroll from "react-infinite-scroll-component";
+
+import { ChatLoader } from "./ChatLoader";
+```
+
+Replace the `messageHistory.map()` rendering with the following:
+
+```tsx
+// Chat.tsx
+<div
+  id="scrollableDiv"
+  className="h-[20rem] mt-3 flex flex-col-reverse relative w-full border border-gray-200 overflow-y-auto p-6"
+>
+  <div>
+    {/* Put the scroll bar always on the bottom */}
+    <InfiniteScroll
+      dataLength={messageHistory.length}
+      next={fetchMessages}
+      className="flex flex-col-reverse" // To put endMessage and loader to the top
+      inverse={true}
+      hasMore={hasMoreMessages}
+      loader={<ChatLoader />}
+      scrollableTarget="scrollableDiv"
+    >
+      {messageHistory.map((message: MessageModel) => (
+        <Message key={message.id} message={message} />
+      ))}
+    </InfiniteScroll>
+  </div>
+</div>
+```
+
+Create a new component `ChatLoader.tsx` and add the following:
+
+```tsx
+// ChatLoader.tsx
+export function ChatLoader() {
+  return (
+    <div className="text-center">
+      <svg
+        role="status"
+        className="mr-2 inline h-8 w-8 animate-spin fill-blue-600 text-gray-200 dark:text-gray-600"
+        viewBox="0 0 100 101"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+          fill="currentColor"
+        />
+        <path
+          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+          fill="currentFill"
+        />
+      </svg>
+    </div>
+  );
+}
+```
+
+On the `Chat` component add some state:
+
+```tsx
+// Chat.tsx
+const [page, setPage] = useState(2);
+const [hasMoreMessages, setHasMoreMessages] = useState(false);
+```
+
+This state is required for the `InfiniteScroll` component. Basically it helps to tell the component when
 to fetch more data and also for the page number to be adjusted as we are
 fetching more data.
 
-Create the
-
-fetchMessages function on the
-
-Chat component:
-
-async
-
-function
-
-fetchMessages
-
-() {  
-
-const
-
-apiRes
-
-=
-
-await
-
-fetch
-
-(  
-
-\`http://127.0.0.1:8000/api/messages/?conversation=${
-
-conversationName
-
-}&page=${
-
-page
-
-}\`
-
-,  
-
-{  
-
-method:
-
-"GET"
-
-,  
-
-headers: {  
-
-Accept:
-
-"application/json"
-
-,  
-
-"Content-Type"
-
-:
-
-"application/json"
-
-,  
-
-Authorization:
-
-\`Bearer ${
-
-user
-
-?.
-
-token
-
-}\`  
-
-}  
-
-}  
-
-);  
-
-if
-
-(apiRes.status
-
-===
-
-200
-
-) {  
-
-const
-
-data
-
-:
-
-{  
-
-count
-
-:
-
-number
-
-;  
-
-next
-
-:
-
-string
-
-\|
-
-null
-
-;
-
-// URL  
-
-previous
-
-:
-
-string
-
-\|
-
-null
-
-;
-
-// URL  
-
-results
-
-:
-
-MessageModel
-
-\[\];  
-
+Create the `fetchMessages` function on the `Chat` component:
+
+```tsx
+async function fetchMessages() {
+  const apiRes = await fetch(
+    `http://127.0.0.1:8000/api/messages/?conversation=${conversationName}&page=${page}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user?.token}`
+      }
+    }
+  );
+  if (apiRes.status === 200) {
+    const data: {
+      count: number;
+      next: string | null; // URL
+      previous: string | null; // URL
+      results: MessageModel[];
+    } = await apiRes.json();
+    setHasMoreMessages(data.next !== null);
+    setPage(page + 1);
+    setMessageHistory((prev: MessageModel[]) => prev.concat(data.results));
+  }
 }
-
-=
-
-await
-
-apiRes.
-
-json
-
-();  
-
-setHasMoreMessages
-
-(data.next
-
-!==
-
-null
-
-);  
-
-setPage
-
-(page
-
-\+
-
-1
-
-);  
-
-setMessageHistory
-
-((
-
-prev
-
-:
-
-MessageModel
-
-\[\])
-
-=\>
-
-prev.
-
-concat
-
-(data.results));  
-
-}  
-
-}  
+``` 
 
 The function fetches messages via the API. The important bit is if the
 request status is 200. It then sets the state with the updates and
 increments the page count.
 
-Lastly, to handle receiving new messages correctly, update the
+Lastly, to handle receiving new messages correctly, update the `chat_message_echo` case to be:
 
-chat_message_echo case to be:
-
-setMessageHistory
-
-((
-
-prev
-
-:
-
-any
-
-)
-
-=\>
-
-\[data.message,
-
-...
-
-prev\]);  
+```tsx
+setMessageHistory((prev: any) => [data.message, ...prev]);
+```
 
 This will make sure that new messages are displayed at the bottom of the
 chat.
 
 Now we need to make an API endpoint to return messages for a
-conversation. In
-
-chat/api/views.py:
-
-chat/api/views.py
-
-from
-
-conversa_dj.chats.models
-
-import
-
-Message  
-
-from
-
-conversa_dj.chats.api.paginaters
-
-import
-
-MessagePagination  
-
-from
-
-.serializers
-
-import
-
-MessageSerializer  
-
-  
-
-  
-
-class
-
-MessageViewSet
-
-(
-
-ListModelMixin
-
-,
-
-GenericViewSet
-
-):  
-
-serializer_class
-
-=
-
-MessageSerializer  
-
-queryset
-
-=
-
-Message.objects.none()  
-
-pagination_class
-
-=
-
-MessagePagination  
-
-  
-
-def
-
-get_queryset
-
-(self):  
-
-conversation_name
-
-=
-
-self
-
-.request.
-
-GET
-
-.get(
-
-"conversation"
-
-)  
-
-queryset
-
-=
-
-(  
-
-Message.objects.filter(  
-
-conversation\_\_name\_\_contains
-
-=
-
-self
-
-.request.user.username,  
-
-)  
-
-.filter(
-
-conversation\_\_name
-
-=
-
-conversation_name)  
-
-.order_by(
-
-"-timestamp"
-
-)  
-
-)  
-
-return
-
-queryset  
-
-Inside
-
-chats/api create a new file
-
-paginaters.py:
-
-chat/api/paginaters.py
-
-from
-
-rest_framework.pagination
-
-import
-
-PageNumberPagination  
-
-  
-
-  
-
-class
-
-MessagePagination
-
-(
-
-PageNumberPagination
-
-):  
-
-page_size
-
-=
-
-50  
-
-page_size_query_param
-
-=
-
-"page_size"  
-
-max_page_size
-
-=
-
-100  
-
-Add the viewset in
-
-config/api_router.py:
-
-config/api_router.py
-
-from
-
-conversa_dj.chats.api.views
-
-import
-
-MessageViewSet  
-
-  
-
-router.register(
-
-"messages"
-
-, MessageViewSet)  
+conversation. In `chat/api/views.py`:
+
+```python
+# chat/api/views.py
+from conversa_dj.chats.models import Message
+from conversa_dj.chats.api.paginaters import MessagePagination
+from .serializers import MessageSerializer
+
+
+class MessageViewSet(ListModelMixin, GenericViewSet):
+    serializer_class = MessageSerializer
+    queryset = Message.objects.none()
+    pagination_class = MessagePagination
+
+    def get_queryset(self):
+        conversation_name = self.request.GET.get("conversation")
+        queryset = (
+            Message.objects.filter(
+                conversation__name__contains=self.request.user.username,
+            )
+            .filter(conversation__name=conversation_name)
+            .order_by("-timestamp")
+        )
+        return queryset
+```
+
+Inside `chats/api` create a new file `paginaters.py`:
+
+```python
+# chat/api/paginaters.py
+from rest_framework.pagination import PageNumberPagination
+
+
+class MessagePagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = "page_size"
+    max_page_size = 100
+```
+
+Add the viewset in `config/api_router.py`:
+
+```python
+# config/api_router.py
+from conversa_dj.chats.api.views import MessageViewSet
+
+router.register("messages", MessageViewSet)
+```
 
 Lastly, when the conversation loads for the first time via the
-websocket, we need to include some data for the pagination. In
+websocket, we need to include some data for the pagination. In `consumers.py` replace the `last_50_messages` JSON message with the following:
 
-consumers.py replace the
+```python
+# consumers.py
+messages = self.conversation.messages.all().order_by("-timestamp")[0:50]
+message_count = self.conversation.messages.all().count()
+self.send_json(
+    {
+        "type": "last_50_messages",
+        "messages": MessageSerializer(messages, many=True).data,
+        "has_more": message_count > 50,
+    }
+)
+```
 
-last_50_messages JSON message with the following:
+Then in `Chat.tsx` replace the `last_50_messages` case with:
 
-consumers.py
-
-messages
-
-=
-
-self
-
-.conversation.messages.all().order_by(
-
-"-timestamp"
-
-)\[
-
-0
-
-:
-
-50
-
-\]  
-
-message_count
-
-=
-
-self
-
-.conversation.messages.all().count()  
-
-self
-
-.send_json(  
-
-{  
-
-"type"
-
-:
-
-"last_50_messages"
-
-,  
-
-"messages"
-
-: MessageSerializer(messages,
-
-many
-
-=
-
-True
-
-).data,  
-
-"has_more"
-
-: message_count
-
-\>
-
-50
-
-,  
-
-}  
-
-)  
-
-Then in
-
-Chat.tsx replace the
-
-last_50_messages case with:
-
-Chat.tsx
-
-case
-
-"last_50_messages"
-
-:  
-
-setMessageHistory
-
-(data.messages);  
-
-setHasMoreMessages
-
-(data.has_more);  
-
-break
-
-;  
+```tsx
+// Chat.tsx
+case "last_50_messages":
+  setMessageHistory(data.messages);
+  setHasMoreMessages(data.has_more);
+  break;
+```
 
 To test this out you will either need a lot of messages or you can
 change some numbers to make it easier. I'd suggest testing by changing
 the paginater page size from 50 to 5. Then you send about 20 messages so
 that there is some data to work with. You will also need to adjust the
-fixed height of the chat app from
-
-h-\[20rem\] to
-
-h-\[10rem\].
+fixed height of the chat app from `h-\[20rem\]` to `h-\[10rem\]`.
 
 Reload the page and you should first see the latest 5 messages. Then
 start scrolling up and you should first see a request made for the next
@@ -10875,22 +2681,10 @@ start scrolling up and you should first see a request made for the next
 
 ## How to Show a User's Online Status
 
-The
+The `online` field on the `Conversation` model is a `ManyToManyField` that is used to store the users that are online.
 
-online field on the
-
-Conversation model is a
-
-ManyToManyField that is used to store the users that are online.
-
-The
-
-join and
-
-leave methods on the model are used to add and remove a user to or from
-the
-
-online field value.
+The `join` and `leave` methods on the model are used to add and remove a user to or from
+the `online` field value.
 
 On the consumer we will add some logic to do the following after
 successfully connected to the websocket:
@@ -10901,107 +2695,39 @@ successfully connected to the websocket:
     has joined the conversation and is now online
 3.  Change the request user to be online
 
-In the
-
-connect method of the
-
-ChatConsumer, after calling the
-
-group_add function add the following:
+In the `connect` method of the `ChatConsumer`, after calling the `group_add` function add the following:
 
 ### Existing code
 
-async_to_sync(
-
-self
-
-.channel_layer.group_add)(  
-
-self
-
-.conversation_name,  
-
-self
-
-.channel_name,  
-
-)  
+```python
+async_to_sync(self.channel_layer.group_add)(
+    self.conversation_name,
+    self.channel_name,
+)
+```
 
 ### Add the following:
 
-self
+```python
+self.send_json(
+    {
+        "type": "online_user_list",
+        "users": [user.username for user in self.conversation.online.all()],
+    }
+)
+```
 
-.send_json(  
+```python
+async_to_sync(self.channel_layer.group_send)(
+    self.conversation_name,
+    {
+        "type": "user_join",
+        "user": self.user.username,
+    },
+)
 
-{  
-
-"type"
-
-:
-
-"online_user_list"
-
-,  
-
-"users"
-
-: \[user.username
-
-for
-
-user
-
-in
-
-self
-
-.conversation.online.all()\],  
-
-}  
-
-)  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.conversation_name,  
-
-{  
-
-"type"
-
-:
-
-"user_join"
-
-,  
-
-"user"
-
-:
-
-self
-
-.user.username,  
-
-},  
-
-)  
-
-  
-
-self
-
-.conversation.online.add(
-
-self
-
-.user)  
+self.conversation.online.add(self.user)
+```
 
 When a user disconnects from the websocket we will do the following:
 
@@ -11009,247 +2735,62 @@ When a user disconnects from the websocket we will do the following:
     is offline
 2.  Change the disconnected user's status to be offline
 
-def
-
-disconnect
-
-(self, code):  
-
-if
-
-self
-
-.user.is_authenticated:
-
-\# send the leave event to the room  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.conversation_name,  
-
-{  
-
-"type"
-
-:
-
-"user_leave"
-
-,  
-
-"user"
-
-:
-
-self
-
-.user.username,  
-
-},  
-
-)  
-
-self
-
-.conversation.online.remove(
-
-self
-
-.user)  
-
-return
-
-super
-
-().disconnect(code)  
+```python
+def disconnect(self, code):
+    if self.user.is_authenticated: # send the leave event to the room
+        async_to_sync(self.channel_layer.group_send)(
+            self.conversation_name,
+            {
+              "type": "user_leave",
+              "user": self.user.username,
+            },
+        )
+        self.conversation.online.remove(self.user)
+    return super().disconnect(code)
+```
 
 Remember, when adding new types of message events you need to add a
 corresponding method on the consumer with the same name as the type of
 event:
 
-def
+```python
+def user_join(self, event):
+    self.send_json(event)
 
-user_join
-
-(self, event):  
-
-self
-
-.send_json(event)  
-
-  
-
-def
-
-user_leave
-
-(self, event):  
-
-self
-
-.send_json(event)  
+def user_leave(self, event):
+    self.send_json(event)
+```
 
 On the frontend we will now show if the user is online. In
 
 Chat.tsx, start by adding some state to store the online users:
 
-const
-
-\[
-
-participants
-
-,
-
-setParticipants
-
-\]
-
-=
-
-useState
-
-\<
-
-string
-
-\[\]\>(\[\]);  
-
-In the
-
-onMessage handler add these new cases:
-
-Chat.tsx
-
-case
-
-"user_join"
-
-:  
-
-setParticipants
-
-((
-
-pcpts
-
-:
-
-string
-
-\[\])
-
-=\>
-
-{  
-
-if
-
-(
-
-!
-
-pcpts.
-
-includes
-
-(data.user)) {  
-
-return
-
-\[
-
-...
-
-pcpts, data.user\];  
-
-}  
-
-return
-
-pcpts;  
-
-});  
-
-break
-
-;  
-
-case
-
-"user_leave"
-
-:  
-
-setParticipants
-
-((
-
-pcpts
-
-:
-
-string
-
-\[\])
-
-=\>
-
-{  
-
-const
-
-newPcpts
-
-=
-
-pcpts.
-
-filter
-
-((
-
-x
-
-)
-
-=\>
-
-x
-
-!==
-
-data.user);  
-
-return
-
-newPcpts;  
-
-});  
-
-break
-
-;  
-
-case
-
-"online_user_list"
-
-:  
-
-setParticipants
-
-(data.users);  
-
-break
-
-;  
+```tsx
+const [participants, setParticipants] = useState<string[]>([]);
+```
+
+In the `onMessage` handler add these new cases:
+
+```tsx
+// Chat.tsx
+case "user_join":
+  setParticipants((pcpts: string[]) => {
+    if (!pcpts.includes(data.user)) {
+      return [...pcpts, data.user];
+    }
+    return pcpts;
+  });
+  break;
+case "user_leave":
+  setParticipants((pcpts: string[]) => {
+    const newPcpts = pcpts.filter((x) => x !== data.user);
+    return newPcpts;
+  });
+  break;
+case "online_user_list":
+  setParticipants(data.users);
+  break;
+```
 
 These cases will set the state so that the array of participants
 contains only the users that are online.
@@ -11258,267 +2799,53 @@ We are going to fetch the conversation from the API so that we have all
 the data for that conversation, including the other user in the
 conversation. Start by adding state again:
 
-import
-
-{ useEffect }
-
-from
-
-"react"
-
-;  
-
-  
-
-import
-
-{ ConversationModel }
-
-from
-
-"../models/Conversation"
-
-;  
-
-  
-
-const
-
-\[
-
-conversation
-
-,
-
-setConversation
-
-\]
-
-=
-
-useState
-
-\<
-
-ConversationModel
-
-\|
-
-null
-
-\>(
-
-null
-
-);  
-
-Then add a
-
-useEffect hook to the component so that we can fetch the conversation:
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-async
-
-function
-
-fetchConversation
-
-() {  
-
-const
-
-apiRes
-
-=
-
-await
-
-fetch
-
-(
-
-\`http://127.0.0.1:8000/api/conversations/${
-
-conversationName
-
-}/\`
-
-, {  
-
-method:
-
-"GET"
-
-,  
-
-headers: {  
-
-Accept:
-
-"application/json"
-
-,  
-
-"Content-Type"
-
-:
-
-"application/json"
-
-,  
-
-Authorization:
-
-\`Token ${
-
-user
-
-?.
-
-token
-
-}\`  
-
-}  
-
-});  
-
-if
-
-(apiRes.status
-
-===
-
-200
-
-) {  
-
-const
-
-data
-
-:
-
-ConversationModel
-
-=
-
-await
-
-apiRes.
-
-json
-
-();  
-
-setConversation
-
-(data);  
-
-}  
-
-}  
-
-fetchConversation
-
-();  
-
-}, \[conversationName, user\]);  
+```tsx
+import { useEffect } from "react";
+
+import { ConversationModel } from "../models/Conversation";
+
+const [conversation, setConversation] = useState<ConversationModel | null>(null);
+```
+
+Then add a `useEffect` hook to the component so that we can fetch the conversation:
+
+```tsx
+useEffect(() => {
+  async function fetchConversation() {
+    const apiRes = await fetch(`http://127.0.0.1:8000/api/conversations/${conversationName}/`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Token ${user?.token}`
+      }
+    });
+    if (apiRes.status === 200) {
+      const data: ConversationModel = await apiRes.json();
+      setConversation(data);
+    }
+  }
+  fetchConversation();
+}, [conversationName, user]);
+```
 
 Now we can display whether the user is online. Add some JSX:
 
-{  
-
-conversation
-
-&&
-
-(  
-
-\<
-
-div
-
-className
-
-=
-
-"py-6"
-
-\>  
-
-\<
-
-h3
-
-className
-
-=
-
-"text-3xl font-semibold text-gray-900"
-
-\>  
-
-Chat with user: {conversation.other_user.username}  
-
-\</
-
-h3
-
-\>  
-
-\<
-
-span
-
-className
-
-=
-
-"text-sm"
-
-\>  
-
-{conversation.other_user.username} is currently  
-
-{participants.
-
-includes
-
-(conversation.other_user.username)
-
-?
-
-" online"
-
-:
-
-" offline"
-
-}  
-
-\</
-
-span
-
-\>  
-
-\</
-
-div
-
-\>  
-
-);  
-
-}  
+```jsx
+{
+  conversation && (
+    <div className="py-6">
+      <h3 className="text-3xl font-semibold text-gray-900">
+        Chat with user: {conversation.other_user.username}
+      </h3>
+      <span className="text-sm">
+        {conversation.other_user.username} is currently
+        {participants.includes(conversation.other_user.username) ? " online" : " offline"}
+      </span>
+    </div>
+  );
+}
+```
 
 You should see under the user's name that it says offline or online.
 Note that the first time you try this it might have an incorrect value.
@@ -11534,74 +2861,29 @@ to listen for keyboard events and then send messages on the websocket
 with a type of "typing". On the consumer we then echo that message to
 the rest of the group.
 
-The consumer is a bit easier so we'll start there. In the
+The consumer is a bit easier so we'll start there. In the `receive_json` method add the following:
 
-receive_json method add the following:
-
-if
-
-message_type
-
-==
-
-"typing"
-
-:  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.conversation_name,  
-
-{  
-
-"type"
-
-:
-
-"typing"
-
-,  
-
-"user"
-
-:
-
-self
-
-.user.username,  
-
-"typing"
-
-: content\[
-
-"typing"
-
-\],  
-
-},  
-
-)  
+```python
+if message_type == "typing":
+    async_to_sync(self.channel_layer.group_send)(
+        self.conversation_name,
+        {
+            "type": "typing",
+            "user": self.user.username,
+            "typing": content["typing"],
+        },
+    )
+```
 
 Here we are expecting the "typing" message to provide a boolean value
 for whether the typing is true or false.
 
 Once again, add a method to the consumer for the new type of message:
 
-def
-
-typing
-
-(self, event):  
-
-self
-
-.send_json(event)  
+```python
+def typing(self, event):
+    self.send_json(event)
+```
 
 On the frontend we'll start by installing
 <a href="https://github.com/JohannesKlauss/react-hotkeys-hook"
@@ -11609,615 +2891,169 @@ class="text-lightBlue hover:text-lightBlueHover ease-in-out transition duration-
 target="_blank" rel="noopener noreferrer">react-hotkeys-hook</a>, a
 package that makes it easier to listen for specific keyboard events:
 
-npm
-
-i
-
-react-hotkeys-hook  
+```bash
+npm i react-hotkeys-hook
+```
 
 Import the component in
 
-Chat.tsx:
+```tsx
+// Chat.tsx:
+import { useHotkeys } from "react-hotkeys-hook";
+```
 
-Chat.tsx
+Then add the following to the `Chat` component:
 
-import
+```tsx
+// Chat.tsx
+const inputReference: any = useHotkeys(
+  "enter",
+  () => {
+    handleSubmit();
+  },
+  {
+    enableOnTags: ["INPUT"]
+  }
+);
 
-{ useHotkeys }
+useEffect(() => {
+  (inputReference.current as HTMLElement).focus();
+}, [inputReference]);
+```
 
-from
-
-"react-hotkeys-hook"
-
-;  
-
-Then add the following to the
-
-Chat component:
-
-Chat.tsx
-
-const
-
-inputReference
-
-:
-
-any
-
-=
-
-useHotkeys
-
-(  
-
-"enter"
-
-,  
-
-()
-
-=\>
-
-{  
-
-handleSubmit
-
-();  
-
-},  
-
-{  
-
-enableOnTags: \[
-
-"INPUT"
-
-\]  
-
-}  
-
-);  
-
-  
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-(inputReference.current
-
-as
-
-HTMLElement
-
-).
-
-focus
-
-();  
-
-}, \[inputReference\]);  
-
-The
-
-inputReference adds an event listener for the
-
-enter keyboard event and is enabled on input tags. The
-
-useEffect is called when the page loads and calls the
-
-.focus() method on the input tag so that the cursor is focussed there
+The `inputReference` adds an event listener for the `enter` keyboard event and is enabled on input tags. The `useEffect` is called when the page loads and calls the `.focus()` method on the input tag so that the cursor is focussed there
 for better user experience.
 
-Replace the
+Replace the `\<input /\>` tag and `\<button\>` component in the return statement:
 
-\<input /\> tag and
-
-\<button\> component in the return statement:
-
-Chat.tsx
-
-\<
-
-div
-
-className
-
-=
-
-"flex w-full items-center justify-between border border-gray-200 p-3"
-
-\>  
-
-\<
-
-input  
-
-type
-
-=
-
-"text"  
-
-placeholder
-
-=
-
-"Message"  
-
-className
-
-=
-
-"block w-full rounded-full bg-gray-100 py-2 outline-none
-focus:text-gray-700"  
-
-name
-
-=
-
-"message"  
-
-value
-
-=
-
-{message}  
-
-onChange
-
-=
-
-{handleChangeMessage}  
-
-required  
-
-ref
-
-=
-
-{inputReference}  
-
-maxLength
-
-=
-
-{
-
-511
-
-}  
-
-/\>  
-
-\<
-
-button
-
-className
-
-=
-
-"ml-3 bg-gray-300 px-3 py-1"
-
-onClick
-
-=
-
-{handleSubmit}\>  
-
-Submit  
-
-\</
-
-button
-
-\>  
-
-\</
-
-div
-
-\>  
+```tsx
+// Chat.tsx
+<div className="flex w-full items-center justify-between border border-gray-200 p-3">
+  <input
+    type="text"
+    placeholder="Message"
+    className="block w-full rounded-full bg-gray-100 py-2 outline-none focus:text-gray-700"
+    name="message"
+    value={message}
+    onChange={handleChangeMessage}
+    required
+    ref={inputReference}
+    maxLength={511}
+  />
+  <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
+    Submit
+  </button>
+</div>
+```
 
 Lastly, to prevent users sending blank messages, add this to the
-beginning of the
-
-handleSubmit function:
-
-if
-
-(message.
-
-length
-
-===
-
-0
-
-)
-
-return
-
-;  
-
-if
-
-(message.
-
-length
-
-\>
-
-512
-
-)
-
-return
-
-;  
-
-Try type a message and press the
-
-enter key on your keyboard. It should send the message just like if you
-press the
-
-Submit button.
-
-Now we can get back to the typing indicator. The
-
-handleChangeMessage function is a callback function for the
-
-onChange event in the
-
-\<input /\> tag. We will add some logic that gets executed inside this
-function because we know that if the
-
-onChange event is firing then the user is typing.
-
-On the
-
-Chat component add the following:
-
-components/Chat.tsx
-
-const
-
-\[
-
-meTyping
-
-,
-
-setMeTyping
-
-\]
-
-=
-
-useState
-
-(
-
-false
-
-);  
-
-const
-
-timeout
-
-=
-
-useRef
-
-\<
-
-any
-
-\>();  
-
-  
-
-function
-
-timeoutFunction
-
-() {  
-
-setMeTyping
-
-(
-
-false
-
-);  
-
-sendJsonMessage
-
-({ type:
-
-"typing"
-
-, typing:
-
-false
-
-});  
-
-}  
-
-  
-
-function
-
-onType
-
-() {  
-
-if
-
-(meTyping
-
-===
-
-false
-
-) {  
-
-setMeTyping
-
-(
-
-true
-
-);  
-
-sendJsonMessage
-
-({ type:
-
-"typing"
-
-, typing:
-
-true
-
-});  
-
-timeout.current
-
-=
-
-setTimeout
-
-(timeoutFunction,
-
-5000
-
-);  
-
+beginning of the `handleSubmit` function:
+
+```tsx
+<div className="flex w-full items-center justify-between border border-gray-200 p-3">
+  <input
+    type="text"
+    placeholder="Message"
+    className="block w-full rounded-full bg-gray-100 py-2 outline-none focus:text-gray-700"
+    name="message"
+    value={message}
+    onChange={handleChangeMessage}
+    required
+    ref={inputReference}
+    maxLength={511}
+  />
+  <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
+    Submit
+  </button>
+</div>
+```
+
+Try type a message and press the `enter` key on your keyboard. It should send the message just like if you
+press the `Submit` button.
+
+Now we can get back to the typing indicator. The `handleChangeMessage` function is a callback function for the `onChange` event in the `\<input /\>` tag. We will add some logic that gets executed inside this
+function because we know that if the `onChange` event is firing then the user is typing.
+
+On the `Chat` component add the following:
+
+```tsx
+// components/Chat.tsx
+const [meTyping, setMeTyping] = useState(false);
+const timeout = useRef<any>();
+
+function timeoutFunction() {
+  setMeTyping(false);
+  sendJsonMessage({ type: "typing", typing: false });
 }
 
-else
+function onType() {
+  if (meTyping === false) {
+    setMeTyping(true);
+    sendJsonMessage({ type: "typing", typing: true });
+    timeout.current = setTimeout(timeoutFunction, 5000);
+  } else {
+    clearTimeout(timeout.current);
+    timeout.current = setTimeout(timeoutFunction, 5000);
+  }
+}
 
-{  
+useEffect(() => () => clearTimeout(timeout.current), []);
+```
 
-clearTimeout
-
-(timeout.current);  
-
-timeout.current
-
-=
-
-setTimeout
-
-(timeoutFunction,
-
-5000
-
-);  
-
-}  
-
-}  
-
-  
-
-useEffect
-
-(()
-
-=\>
-
-()
-
-=\>
-
-clearTimeout
-
-(timeout.current), \[\]);  
-
-The
-
-onType function uses timeouts so that if you start typing it will
+The `onType` function uses timeouts so that if you start typing it will
 display the "typing" status for 5 seconds. When you stop typing, 5
-seconds later the
-
-timeoutFunction will be called. We have to make sure this logic works
+seconds later the `timeoutFunction` will be called. We have to make sure this logic works
 because otherwise the websocket can get flooded with messages.
 
-The
+The `handleChange` function should now call the `onType` function:
 
-handleChange function should now call the
+```tsx
+function handleChangeMessage(e: any) {
+  setMessage(e.target.value);
+  onType();
+}
+```
 
-onType function:
-
-function
-
-handleChangeMessage
-
-(
-
-e
-
-:
-
-any
-
-) {  
-
-setMessage
-
-(e.target.value);  
-
-onType
-
-();  
-
-}  
-
-Lastly, the
-
-handleSubmit function should also clear the timeout. This is because
+Lastly, the `handleSubmit` function should also clear the timeout. This is because
 once a message has been sent it's logical to assume that the user is
-done typing. Add the following to the end of the
+done typing. Add the following to the end of the `handleSubmit` function:
 
-handleSubmit function:
-
-clearTimeout
-
-(timeout.current);  
-
-timeoutFunction
-
-();  
+```tsx
+clearTimeout(timeout.current);
+timeoutFunction();
+```
 
 Add some state to show when the other participant is typing:
 
-const
-
-\[
-
-typing
-
-,
-
-setTyping
-
-\]
-
-=
-
-useState
-
-(
-
-false
-
-);  
+```tsx
+const [typing, setTyping] = useState(false);
+```
 
 Add this function to update the state when receiving a "typing" message:
 
-function
+```tsx
+function updateTyping(event: { user: string; typing: boolean }) {
+  if (event.user !== user!.username) {
+    setTyping(event.typing);
+  }
+}
+```
 
-updateTyping
+Add a `case` to the `onMessage` handler for the websocket message.
 
-(
-
-event
-
-:
-
-{
-
-user
-
-:
-
-string
-
-;
-
-typing
-
-:
-
-boolean
-
-}) {  
-
-if
-
-(event.user
-
-!==
-
-user
-
-!
-
-.username) {  
-
-setTyping
-
-(event.typing);  
-
-}  
-
-}  
-
-Add a
-
-case to the
-
-onMessage handler for the websocket message.
-
-case
-
-'typing'
-
-:  
-
-updateTyping
-
-(data);  
-
-break
-
-;  
+```tsx
+case 'typing':
+  updateTyping(data);
+  break;
+```
 
 Lastly, add some JSX to display when the user is typing:
 
-{  
-
-typing
-
-&&
-
-\<
-
-p
-
-className
-
-=
-
-"truncate text-sm text-gray-500"
-
-\>typing...\</
-
-p
-
-\>;  
-
-}  
+```tsx
+{
+  typing && <p className="truncate text-sm text-gray-500">typing...</p>;
+}
+```
 
 Go ahead and test it out! You should see the *typing...* message showing
 under the user's online status. Also, when you press the enter key you
@@ -12231,155 +3067,42 @@ working with up until now is only connected when navigating to a chat.
 Whereas the navbar is displayed on all pages. Hence we're going to
 create a new consumer that will deal with notifications.
 
-In
+In `chats/consumers.py` create a new consumer:
 
-chats/consumers.py create a new consumer:
+```python
+class NotificationConsumer(JsonWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.user = None
 
-class
+    def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            return
 
-NotificationConsumer
+        self.accept()
 
-(
+        # Send count of unread messages
+```
 
-JsonWebsocketConsumer
+Add the consumer to `config/routing.py`. Note here we've also changed the path of the `ChatConsumer` so that it doesn't conflict with the notifications.
 
-):  
+```python
+from django.urls import path
 
-def
+from conversa_dj.chats.consumers import ChatConsumer, NotificationConsumer
 
-\_\_init\_\_
-
-(self,
-
-\*
-
-args,
-
-\*\*
-
-kwargs):  
-
-super
-
-().
-
-\_\_init\_\_
-
-(args, kwargs)  
-
-self
-
-.user
-
-=
-
-None  
-
-  
-
-def
-
-connect
-
-(self):  
-
-self
-
-.user
-
-=
-
-self
-
-.scope\[
-
-"user"
-
-\]  
-
-if
-
-not
-
-self
-
-.user.is_authenticated:  
-
-return  
-
-  
-
-self
-
-.accept()  
-
-  
-
-\# Send count of unread messages  
-
-Add the consumer to
-
-config/routing.py. Note here we've also changed the path of the
-
-ChatConsumer so that it doesn't conflict with the notifications.
-
-from
-
-django.urls
-
-import
-
-path  
-
-  
-
-from
-
-conversa_dj.chats.consumers
-
-import
-
-ChatConsumer, NotificationConsumer  
-
-  
-
-websocket_urlpatterns
-
-=
-
-\[  
-
-path(
-
-"chats/\<conversation_name\>/"
-
-, ChatConsumer.as_asgi()),  
-
-path(
-
-"notifications/"
-
-, NotificationConsumer.as_asgi()),  
-
-\]  
+websocket_urlpatterns = [
+    path("chats/<conversation_name>/", ChatConsumer.as_asgi()),
+    path("notifications/", NotificationConsumer.as_asgi()),
+]
+```
 
 On the frontend change the websocket URL:
 
-user
-
-?
-
-\`ws://127.0.0.1:8000/chats/${
-
-conversationName
-
-}/\`
-
-:
-
-null
-
-,  
+```tsx
+user ? `ws://127.0.0.1:8000/chats/${conversationName}/` : null,
+```
 
 The notifications will be displayed in the navbar and will also need to
 be available in the chat component (this is so that we can update the
@@ -12387,564 +3110,110 @@ notification count when a user reads the messages). For this reason
 we're going to use React context to manage this websocket connection and
 the notification functionality.
 
-Inside
-
-contexts create a new file
-
-NotificationContext.tsx:
-
-NotificationContext.tsx
-
-import
-
-React, { createContext, ReactNode, useContext, useState }
-
-from
-
-"react"
-
-;  
-
-import
-
-useWebSocket, { ReadyState }
-
-from
-
-"react-use-websocket"
-
-;  
-
-  
-
-import
-
-{ AuthContext }
-
-from
-
-"./AuthContext"
-
-;  
-
-  
-
-const
-
-DefaultProps
-
-=
-
-{  
-
-unreadMessageCount:
-
-0
-
-,  
-
-connectionStatus:
-
-"Uninstantiated"  
-
-};  
-
-  
-
-export
-
-interface
-
-NotificationProps
-
-{  
-
-unreadMessageCount
-
-:
-
-number
-
-;  
-
-connectionStatus
-
-:
-
-string
-
-;  
-
-}  
-
-  
-
-export
-
-const
-
-NotificationContext
-
-=
-
-createContext
-
-\<
-
-NotificationProps
-
-\>(DefaultProps);  
-
-  
-
-export
-
-const
-
-NotificationContextProvider
-
-:
-
-React
-
-.
-
-FC
-
-\<{
-
-children
-
-:
-
-ReactNode
-
-}\>
-
-=
-
-({
-
-children
-
-})
-
-=\>
-
-{  
-
-const
-
-{
-
-user
-
+Inside `contexts` create a new file `NotificationContext.tsx`:
+
+```tsx
+// NotificationContext.tsx
+import React, { createContext, ReactNode, useContext, useState } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+import { AuthContext } from "./AuthContext";
+
+const DefaultProps = {
+  unreadMessageCount: 0,
+  connectionStatus: "Uninstantiated"
+};
+
+export interface NotificationProps {
+  unreadMessageCount: number;
+  connectionStatus: string;
 }
 
-=
+export const NotificationContext = createContext<NotificationProps>(DefaultProps);
 
-useContext
+export const NotificationContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
-(AuthContext);  
+  const { readyState } = useWebSocket(user ? `ws://127.0.0.1:8000/notifications/` : null, {
+    queryParams: {
+      token: user ? user.token : ""
+    },
+    onOpen: () => {
+      console.log("Connected to Notifications!");
+    },
+    onClose: () => {
+      console.log("Disconnected from Notifications!");
+    },
+    onMessage: (e) => {
+      const data = JSON.parse(e.data);
+      switch (data.type) {
+        default:
+          bash.error("Unknown message type!");
+          break;
+      }
+    }
+  });
 
-const
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated"
+  }[readyState];
 
-\[
+  return (
+    <NotificationContext.Provider value={{ unreadMessageCount, connectionStatus }}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+```
 
-unreadMessageCount
+Import the context in `App.tsx`:
 
-,
+```tsx
+// App.tsx
+import { NotificationContextProvider } from "./contexts/NotificationContext";
+```
 
-setUnreadMessageCount
+Wrap the `Navbar` component inside the context:
 
-\]
+```tsx
+// App.tsx
+<AuthContextProvider>
+  <NotificationContextProvider>
+    <Navbar />
+  </NotificationContextProvider>
+</AuthContextProvider>
+```
 
-=
+Then inside `Navbar.tsx` we can access the context:
 
-useState
+```tsx
+// Navbar.tsx
+import { NotificationContext } from "../contexts/NotificationContext";
 
-(
+export function Navbar() {
+  // authcontext
+  const { unreadMessageCount } = useContext(NotificationContext);
 
-0
-
-);  
-
-  
-
-const
-
-{
-
-readyState
-
+  // return statement
 }
+```
 
-=
+Inside the `Active Conversations` link,  display the unread message count:
 
-useWebSocket
-
-(user
-
-?
-
-\`ws://127.0.0.1:8000/notifications/\`
-
-:
-
-null
-
-, {  
-
-queryParams: {  
-
-token: user
-
-?
-
-user.token
-
-:
-
-""  
-
-},  
-
-onOpen
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Connected to Notifications!"
-
-);  
-
-},  
-
-onClose
-
-: ()
-
-=\>
-
-{  
-
-console.
-
-log
-
-(
-
-"Disconnected from Notifications!"
-
-);  
-
-},  
-
-onMessage
-
-: (
-
-e
-
-)
-
-=\>
-
-{  
-
-const
-
-data
-
-=
-
-JSON
-
-.
-
-parse
-
-(e.data);  
-
-switch
-
-(data.type) {  
-
-default
-
-:  
-
-bash.
-
-error
-
-(
-
-"Unknown message type!"
-
-);  
-
-break
-
-;  
-
-}  
-
-}  
-
-});  
-
-  
-
-const
-
-connectionStatus
-
-=
-
-{  
-
-\[ReadyState.
-
-CONNECTING
-
-\]:
-
-"Connecting"
-
-,  
-
-\[ReadyState.
-
-OPEN
-
-\]:
-
-"Open"
-
-,  
-
-\[ReadyState.
-
-CLOSING
-
-\]:
-
-"Closing"
-
-,  
-
-\[ReadyState.
-
-CLOSED
-
-\]:
-
-"Closed"
-
-,  
-
-\[ReadyState.
-
-UNINSTANTIATED
-
-\]:
-
-"Uninstantiated"  
-
-}\[readyState\];  
-
-  
-
-return
-
-(  
-
-\<
-
-NotificationContext.Provider
-
-value
-
-=
-
-{{ unreadMessageCount, connectionStatus }}\>  
-
-{children}  
-
-\</
-
-NotificationContext.Provider
-
-\>  
-
-);  
-
-};  
-
-Import the context in
-
-App.tsx:
-
-App.tsx
-
-import
-
-{ NotificationContextProvider }
-
-from
-
-"./contexts/NotificationContext"
-
-;  
-
-Wrap the
-
-Navbar component inside the context:
-
-App.tsx
-
-\<
-
-AuthContextProvider
-
-\>  
-
-\<
-
-NotificationContextProvider
-
-\>  
-
-\<
-
-Navbar
-
-/\>  
-
-\</
-
-NotificationContextProvider
-
-\>  
-
-\</
-
-AuthContextProvider
-
-\>  
-
-Then inside
-
-Navbar.tsx we can access the context:
-
-Navbar.tsx
-
-import
-
-{ NotificationContext }
-
-from
-
-"../contexts/NotificationContext"
-
-;  
-
-  
-
-export
-
-function
-
-Navbar
-
-() {  
-
-// authcontext  
-
-const
-
+```tsx
 {
-
-unreadMessageCount
-
+  unreadMessageCount > 0 && (
+    <span className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-white">
+      <span className="text-xs font-medium leading-none text-gray-800">{unreadMessageCount}</span>
+    </span>
+  );
 }
-
-=
-
-useContext
-
-(NotificationContext);  
-
-  
-
-// return statement  
-
-}  
-
-Inside the
-
-Active Conversations link,  display the unread message count:
-
-{  
-
-unreadMessageCount
-
-\>
-
-0
-
-&&
-
-(  
-
-\<
-
-span
-
-className
-
-=
-
-"ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full
-bg-white"
-
-\>  
-
-\<
-
-span
-
-className
-
-=
-
-"text-xs font-medium leading-none text-gray-800"
-
-\>{unreadMessageCount}\</
-
-span
-
-\>  
-
-\</
-
-span
-
-\>  
-
-);  
-
-}  
+```
 
 Now we will work on displaying the correct count and updating it when:
 
@@ -12953,71 +3222,25 @@ Now we will work on displaying the correct count and updating it when:
 
 ### Receiving Initial Unread Message Count
 
-In the
+In the `connect` method of the `NotificationConsumer` replace the comment with the following:
 
-connect method of the
-
-NotificationConsumer replace the comment with the following:
-
-unread_count
-
-=
-
-Message.objects.filter(
-
-to_user
-
-=
-
-self
-
-.user,
-
-read
-
-=
-
-False
-
-).count()  
-
-self
-
-.send_json(  
-
-{  
-
-"type"
-
-:
-
-"unread_count"
-
-,  
-
-"unread_count"
-
-: unread_count,  
-
-}  
-
-)  
+```tsx
+unread_count = Message.objects.filter(to_user=self.user, read=False).count()
+self.send_json(
+    {
+        "type": "unread_count",
+        "unread_count": unread_count,
+    }
+)
+```
 
 On the frontend add a case to handle this message:
 
-case
-
-"online_user_list"
-
-:  
-
-setParticipants
-
-(data.users);  
-
-break
-
-;  
+```tsx
+case "online_user_list":
+  setParticipants(data.users);
+  break;
+```
 
 You should now see the count showing in the navbar. However, this is
 because up until this point we haven't been setting the messages as
@@ -13025,210 +3248,76 @@ read. We'll get to that part soon.
 
 ### Receiving New Messages
 
-When connected to the
-
-ChatConsumer you will receive the
-
-chat_message_echo message when someone sends you a message. It is here
+When connected to the `ChatConsumer` you will receive the `chat_message_echo` message when someone sends you a message. It is here
 that we will add the next bit of logic which is to send a notification
-event of a new message. Django Channels'
+event of a new message. Django Channels' `group` functionality helps to achieve this.
 
-group functionality helps to achieve this.
+On the `NotificationConsumer` in the `connect` method after accepting the connection add the following:
 
-On the
-
-NotificationConsumer in the
-
-connect method after accepting the connection add the following:
-
-\# private notification group  
-
-self
-
-.notification_group_name
-
-=
-
-self
-
-.user.username
-
-\+
-
-"\_\_notifications"  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_add)(  
-
-self
-
-.notification_group_name,  
-
-self
-
-.channel_name,  
-
-)  
+```python
+# private notification group
+self.notification_group_name = self.user.username + "__notifications"
+async_to_sync(self.channel_layer.group_add)(
+    self.notification_group_name,
+    self.channel_name,
+)
+```
 
 Only the request user is part of this group. That means each user will
-have their own private group when connected to the
-
-NotificationConsumer. In the
-
-disconnect method we can remove the user from this group because it
+have their own private group when connected to the `NotificationConsumer`. In the `disconnect` method we can remove the user from this group because it
 would no longer be needed:
 
-In the
-
-\_\_init\_\_ method add an initialising value for the
-
-notification_group_name:
+In the `\_\_init\_\_` method add an initialising value for the `notification_group_name`:
 
 self.notification_group_name = None
 
 Then add a disconnect method that discards the group:
 
-def
+```python
+def disconnect(self, code):
+    async_to_sync(self.channel_layer.group_discard)(
+        self.notification_group_name,
+        self.channel_name,
+    )
+    return super().disconnect(code)
+```
 
-disconnect
-
-(self, code):  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_discard)(  
-
-self
-
-.notification_group_name,  
-
-self
-
-.channel_name,  
-
-)  
-
-return
-
-super
-
-().disconnect(code)  
-
-Now in the
-
-ChatConsumer we can send a group message to the user's notification
+Now in the `ChatConsumer` we can send a group message to the user's notification
 group whenever they receive a new message. After sending the group
-message with type
+message with type `chat_message_echo`, add the following:
 
-chat_message_echo, add the following:
-
-notification_group_name
-
-=
-
-self
-
-.get_receiver().username
-
-\+
-
-"\_\_notifications"  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-notification_group_name,  
-
-{  
-
-"type"
-
-:
-
-"new_message_notification"
-
-,  
-
-"name"
-
-:
-
-self
-
-.user.username,  
-
-"message"
-
-: MessageSerializer(message).data,  
-
-},  
-
-)  
+```python
+notification_group_name = self.get_receiver().username + "__notifications"
+async_to_sync(self.channel_layer.group_send)(
+    notification_group_name,
+    {
+        "type": "new_message_notification",
+        "name": self.user.username,
+        "message": MessageSerializer(message).data,
+    },
+)
+```
 
 Here it's very important to understand that we are sending the
-notification to the **other** user (the recipient). Hence calling the
-
-self.get_receiver() function to fetch that user and create their
+notification to the **other** user (the recipient). Hence calling the `self.get_receiver()` function to fetch that user and create their
 notification group name to send the message.
 
 Because this group is used on both consumers, add this handler method to
-both the
+both the `ChatConsumer` and `NotificationConsumer` to handle this type of message:
 
-ChatConsumer and
+```python
+def new_message_notification(self, event):
+    self.send_json(event)
+```
 
-NotificationConsumer to handle this type of message:
+Now on the frontend in the `NotificationContext` context we can add a case to handle this message:
 
-def
-
-new_message_notification
-
-(self, event):  
-
-self
-
-.send_json(event)  
-
-Now on the frontend in the
-
-NotificationContext context we can add a case to handle this message:
-
-NotificationContext.tsx
-
-case
-
-"new_message_notification"
-
-:  
-
-setUnreadMessageCount
-
-((
-
-count
-
-)
-
-=\>
-
-(count
-
-+=
-
-1
-
-));  
-
-break
-
-;  
+```tsx
+// NotificationContext.tsx
+case "new_message_notification":
+  setUnreadMessageCount((count) => (count += 1));
+  break;
+```
 
 With this you should now test sending a message. Login to the other user
 and watch the notification count update as you're being sent messages!
@@ -13240,163 +3329,44 @@ also set the messages as **read** whenever the user enters the
 conversation. This is done by sending a message from the frontend when
 the chat component is mounted.
 
-In
+In `Chat.tsx` add a `useEffect` that sends a message when the state of the websocket is open:
 
-Chat.tsx add a
+```tsx
+// Chat.tsx
+useEffect(() => {
+  if (connectionStatus === "Open") {
+    sendJsonMessage({
+      type: "read_messages"
+    });
+  }
+}, [connectionStatus, sendJsonMessage]);
+```
 
-useEffect that sends a message when the state of the websocket is open:
-
-Chat.tsx
-
-useEffect
-
-(()
-
-=\>
-
-{  
-
-if
-
-(connectionStatus
-
-===
-
-"Open"
-
-) {  
-
-sendJsonMessage
-
-({  
-
-type:
-
-"read_messages"  
-
-});  
-
-}  
-
-}, \[connectionStatus, sendJsonMessage\]);  
-
-Also, in the
-
-onMessage handler we can also send this event when we receive new
+Also, in the `onMessage` handler we can also send this event when we receive new
 messages. This is because if we are already in the chat, then it is not
-necessary to receive a notification of the message. In the case
+necessary to receive a notification of the message. In the case `chat_message_echo` add this after updating the message state.
 
-chat_message_echo add this after updating the message state.
+```tsx
+sendJsonMessage({ type: "read_messages" });
+```
 
-sendJsonMessage
+Now in the `ChatConsumer` we can add another condition in the `receive_json` method to handle this type of incoming message:
 
-({ type:
+```python
+if message_type == "read_messages":
+    messages_to_me = self.conversation.messages.filter(to_user=self.user)
+    messages_to_me.update(read=True)
 
-"read_messages"
-
-});  
-
-Now in the
-
-ChatConsumer we can add another condition in the
-
-receive_json method to handle this type of incoming message:
-
-if
-
-message_type
-
-==
-
-"read_messages"
-
-:  
-
-messages_to_me
-
-=
-
-self
-
-.conversation.messages.filter(
-
-to_user
-
-=
-
-self
-
-.user)  
-
-messages_to_me.update(
-
-read
-
-=
-
-True
-
-)  
-
-  
-
-\# Update the unread message count  
-
-unread_count
-
-=
-
-Message.objects.filter(
-
-to_user
-
-=
-
-self
-
-.user,
-
-read
-
-=
-
-False
-
-).count()  
-
-async_to_sync(
-
-self
-
-.channel_layer.group_send)(  
-
-self
-
-.user.username
-
-\+
-
-"\_\_notifications"
-
-,  
-
-{  
-
-"type"
-
-:
-
-"unread_count"
-
-,  
-
-"unread_count"
-
-: unread_count,  
-
-},  
-
-)  
+    # Update the unread message count
+    unread_count = Message.objects.filter(to_user=self.user, read=False).count()
+    async_to_sync(self.channel_layer.group_send)(
+        self.user.username + "__notifications",
+        {
+            "type": "unread_count",
+            "unread_count": unread_count,
+        },
+    )
+```
 
 It's important to filter the messages in the conversation to be the
 messages sent \*\*to \*\*the request user. Otherwise you'll be setting
@@ -13405,23 +3375,12 @@ messages read that should only technically read by the other recipient.
 We're also sending another group message. This time to the request
 user's notification group so that it can update the count on the
 frontend. The last bit to make this work is to add another method on
-both the
+both the `ChatConsumer` and `NotificationConsumer` to handle the `unread_count` type:
 
-ChatConsumer and
-
-NotificationConsumer to handle the
-
-unread_count type:
-
-def
-
-unread_count
-
-(self, event):  
-
-self
-
-.send_json(event)  
+```python
+def unread_count(self, event):
+    self.send_json(event)
+```
 
 Try sending a message while the other user is not in the chat. They
 should first have their notification count increase. Then when they
